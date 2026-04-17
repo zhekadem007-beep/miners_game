@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -50,12 +50,10 @@
 
         .controls { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 10px; }
         
-        /* Панель вибору мін */
         .bomb-selector { display: flex; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 14px; gap: 4px; }
         .bomb-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #777; font-weight: 900; border-radius: 10px; cursor: pointer; }
         .bomb-btn.active { background: white; color: black; }
 
-        /* Ті самі кнопки MIN, 1/2, x2, MAX */
         .bet-tools { display: flex; gap: 5px; }
         .tool-btn {
             flex: 1; background: var(--panel); border: 1px solid rgba(255,255,255,0.1);
@@ -82,8 +80,8 @@
 <body>
 
     <div class="header">
-        <div><div style="font-size: 10px; color: #aaa;">БАЛАНС</div><div class="balance-val" id="bal">1000</div></div>
-        <div style="text-align: right;"><div style="font-size: 10px; color: #aaa;">МНОЖНИК</div><div class="coef-val" id="mult">x1.00</div></div>
+        <div><div style="font-size: 10px; color: #aaa;">BALANCE</div><div class="balance-val" id="bal">1000</div></div>
+        <div style="text-align: right;"><div style="font-size: 10px; color: #aaa;">MULTIPLIER</div><div class="coef-val" id="mult">x1.00</div></div>
     </div>
 
     <div class="history" id="history"></div>
@@ -108,8 +106,8 @@
             <input type="number" id="betField" value="100" style="margin-top:8px">
         </div>
 
-        <button id="sBtn" class="action-btn btn-start" onclick="start()">Грати</button>
-        <button id="cBtn" class="action-btn btn-cashout" onclick="cashout()">Забрати</button>
+        <button id="sBtn" class="action-btn btn-start" onclick="start()">Play</button>
+        <button id="cBtn" class="action-btn btn-cashout" onclick="cashout()">Cash Out</button>
     </div>
 
     <script>
@@ -198,7 +196,7 @@
         function updateUI() {
             document.getElementById('bal').innerText = balance;
             document.getElementById('mult').innerText = 'x' + currentCoef.toFixed(2);
-            document.getElementById('cBtn').innerText = `ЗАБРАТИ ${(currentBet * currentCoef).toFixed(0)}`;
+            document.getElementById('cBtn').innerText = `CASH OUT ${(currentBet * currentCoef).toFixed(0)}`;
             localStorage.setItem('user_bal', balance);
         }
         createBoard(); updateUI();
