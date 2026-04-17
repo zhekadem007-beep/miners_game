@@ -6,49 +6,108 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --success: #00c853; --error: #ff5252; --bg: #0b0e11; --panel: rgba(255, 255, 255, 0.07); }
-        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 15px; height: 100vh; overflow: hidden; }
-        .header { width: 100%; max-width: 360px; display: flex; justify-content: space-between; padding: 15px 20px; background: var(--panel); backdrop-filter: blur(15px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; box-sizing: border-box; }
+        :root {
+            --primary: #00d2ff; --success: #00c853; --error: #ff5252;
+            --bg: #0b0e11; --panel: rgba(255, 255, 255, 0.07);
+        }
+        body {
+            background: var(--bg); color: white; font-family: 'Inter', sans-serif;
+            display: flex; flex-direction: column; align-items: center;
+            margin: 0; padding: 15px; height: 100vh; overflow: hidden;
+        }
+        .header {
+            width: 100%; max-width: 360px; display: flex; justify-content: space-between;
+            padding: 15px 20px; background: var(--panel); backdrop-filter: blur(15px);
+            border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 10px; box-sizing: border-box;
+        }
         .balance-val { font-size: 20px; font-weight: 900; color: var(--success); }
         .coef-val { font-size: 22px; font-weight: 900; color: #ffab00; }
-        .history { display: flex; gap: 5px; margin-bottom: 10px; width: 100%; max-width: 360px; height: 28px; overflow: hidden; justify-content: center; }
-        .hist-item { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; background: var(--panel); animation: popIn 0.3s ease; white-space: nowrap; }
+
+        .history {
+            display: flex; gap: 5px; margin-bottom: 10px; width: 100%;
+            max-width: 360px; height: 28px; overflow: hidden; justify-content: center;
+        }
+        .hist-item {
+            padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold;
+            background: var(--panel); animation: popIn 0.3s ease; white-space: nowrap;
+        }
         .hist-win { color: var(--success); border: 1px solid var(--success); }
         .hist-lose { color: var(--error); border: 1px solid var(--error); }
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 12px; background: var(--panel); border-radius: 20px; margin-bottom: 10px; }
-        .cell { width: 58px; height: 58px; background: rgba(255,255,255,0.1); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.05); }
+
+        .grid {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+            padding: 12px; background: var(--panel); border-radius: 20px; margin-bottom: 10px;
+        }
+        .cell {
+            width: 58px; height: 58px; background: rgba(255,255,255,0.1);
+            border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: 26px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.05);
+        }
         .cell.win { background: linear-gradient(135deg, #00c853, #1b5e20); }
-        .cell.lose { background: linear-gradient(135deg, #ff5252, #b71c1c); box-shadow: 0 0 20px rgba(255,82,82,0.4); z-index: 2; }
+        .cell.lose { background: linear-gradient(135deg, #ff5252, #b71c1c); box-shadow: 0 0 20px rgba(255,82,82,0.4); z-index: 5; }
         .cell.revealed { opacity: 0.3; transform: scale(0.85); }
-        .controls { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 8px; }
+
+        .controls { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 10px; }
+        
+        /* Панель вибору мін */
         .bomb-selector { display: flex; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 14px; gap: 4px; }
-        .bomb-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #777; font-weight: 900; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+        .bomb-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #777; font-weight: 900; border-radius: 10px; cursor: pointer; }
         .bomb-btn.active { background: white; color: black; }
-        input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 12px; color: white; text-align: center; font-size: 18px; font-weight: 900; box-sizing: border-box; }
-        .action-btn { width: 100%; border: none; border-radius: 16px; padding: 16px; font-weight: 900; font-size: 18px; text-transform: uppercase; cursor: pointer; color: white; }
-        .btn-start { background: linear-gradient(to right, #00d2ff, #3a7bd5); }
+
+        /* Ті самі кнопки MIN, 1/2, x2, MAX */
+        .bet-tools { display: flex; gap: 5px; }
+        .tool-btn {
+            flex: 1; background: var(--panel); border: 1px solid rgba(255,255,255,0.1);
+            color: white; border-radius: 12px; padding: 10px; font-size: 12px; font-weight: 900; cursor: pointer;
+        }
+
+        input { 
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 16px; padding: 15px; color: white; text-align: center; 
+            font-size: 20px; font-weight: 900; box-sizing: border-box; 
+        }
+
+        .action-btn { 
+            width: 100%; border: none; border-radius: 18px; padding: 18px; 
+            font-weight: 900; font-size: 18px; text-transform: uppercase; cursor: pointer; color: white; 
+        }
+        .btn-start { background: linear-gradient(to right, #00d2ff, #3a7bd5); box-shadow: 0 4px 15px rgba(58, 123, 213, 0.4); }
         .btn-cashout { background: linear-gradient(to right, #f2994a, #f2c94c); color: black; display: none; }
+        
         .disabled { opacity: 0.4; pointer-events: none; }
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
+
     <div class="header">
         <div><div style="font-size: 10px; color: #aaa;">БАЛАНС</div><div class="balance-val" id="bal">1000</div></div>
         <div style="text-align: right;"><div style="font-size: 10px; color: #aaa;">МНОЖНИК</div><div class="coef-val" id="mult">x1.00</div></div>
     </div>
+
     <div class="history" id="history"></div>
     <div class="grid" id="grid"></div>
+
     <div class="controls">
         <div id="setupArea">
-            <div class="bomb-selector">
+            <div class="bomb-selector" style="margin-bottom: 8px;">
                 <button class="bomb-btn" onclick="setBombs(3, this)">3</button>
                 <button class="bomb-btn active" onclick="setBombs(5, this)">5</button>
                 <button class="bomb-btn" onclick="setBombs(10, this)">10</button>
                 <button class="bomb-btn" onclick="setBombs(24, this)">24</button>
             </div>
+            
+            <div class="bet-tools">
+                <button class="tool-btn" onclick="adjustBet('min')">MIN</button>
+                <button class="tool-btn" onclick="adjustBet('half')">1/2</button>
+                <button class="tool-btn" onclick="adjustBet('double')">x2</button>
+                <button class="tool-btn" onclick="adjustBet('max')">MAX</button>
+            </div>
+            
             <input type="number" id="betField" value="100" style="margin-top:8px">
         </div>
+
         <button id="sBtn" class="action-btn btn-start" onclick="start()">Грати</button>
         <button id="cBtn" class="action-btn btn-cashout" onclick="cashout()">Забрати</button>
     </div>
@@ -66,6 +125,15 @@
             tg.HapticFeedback.impactOccurred('light');
         }
 
+        function adjustBet(type) {
+            let b = parseInt(document.getElementById('betField').value) || 0;
+            if(type==='min') b=10; 
+            else if(type==='half') b=Math.floor(b/2);
+            else if(type==='double') b*=2; 
+            else if(type==='max') b=balance;
+            document.getElementById('betField').value = Math.max(1, Math.min(b, balance));
+        }
+
         function createBoard() {
             const g = document.getElementById('grid'); g.innerHTML = '';
             for(let i=0; i<25; i++) {
@@ -77,10 +145,12 @@
         function start() {
             currentBet = parseInt(document.getElementById('betField').value);
             if(currentBet > balance || currentBet <= 0) return;
+            
             balance -= currentBet; active = true; gemsFound = 0; currentCoef = 1.0;
             mines = [];
             let p = Array.from({length: 25}, (_, i) => i);
             for(let i=0; i<bombsCount; i++) mines.push(p.splice(Math.floor(Math.random()*p.length), 1)[0]);
+            
             createBoard(); updateUI();
             document.getElementById('sBtn').style.display = 'none';
             document.getElementById('cBtn').style.display = 'block';
