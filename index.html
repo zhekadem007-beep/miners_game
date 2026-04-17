@@ -2,43 +2,61 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #121212; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
-        .stats-container { display: flex; justify-content: space-between; width: 100%; max-width: 300px; margin-bottom: 10px; font-weight: bold; }
-        .balance { color: #4caf50; }
-        .coef { color: #ffaa00; }
+        body { background: #121212; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; touch-action: manipulation; }
         
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; background: #1e1e1e; padding: 15px; border-radius: 15px; pointer-events: none; opacity: 0.6; }
-        .grid.active { pointer-events: auto; opacity: 1; }
-        
-        .cell { width: 55px; height: 55px; background: #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; transition: 0.2s; }
-        .cell.win { background: #2e7d32; }
-        .cell.lose { background: #c62828; }
+        .header { display: flex; justify-content: space-between; width: 100%; max-width: 320px; margin-bottom: 15px; background: #1e1e1e; padding: 10px; border-radius: 12px; }
+        .balance { color: #4caf50; font-weight: bold; }
+        .coef { color: #ffaa00; font-weight: bold; }
 
-        .controls { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; }
-        input { padding: 12px; border-radius: 8px; border: none; background: #333; color: white; text-align: center; font-size: 16px; }
-        .btns-row { display: flex; gap: 10px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; }
+        .status-msg { margin-bottom: 10px; height: 24px; font-weight: bold; color: #bbb; }
+
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; background: #1e1e1e; padding: 15px; border-radius: 15px; margin-bottom: 20px; }
+        .cell { width: 55px; height: 55px; background: #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; transition: 0.2s; }
+        .cell.win { background: #2e7d32; border: 1px solid #4caf50; }
+        .cell.lose { background: #c62828; border: 1px solid #ff5252; }
+        .cell.disabled { pointer-events: none; }
+
+        .controls { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 15px; }
+        
+        .bomb-selector { display: flex; justify-content: space-between; gap: 5px; }
+        .bomb-btn { flex: 1; padding: 8px; background: #333; border: 1px solid #444; color: white; border-radius: 8px; font-size: 12px; cursor: pointer; }
+        .bomb-btn.active { background: #248b91; border-color: #4dd0e1; }
+
+        .bet-box { display: flex; gap: 10px; }
+        input { flex: 2; padding: 12px; border-radius: 10px; border: 2px solid #333; background: #1a1a1a; color: white; font-size: 16px; outline: none; }
+        input:focus { border-color: #248b91; }
+
+        .main-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; }
         .btn-start { background: #248b91; }
         .btn-cashout { background: #ff8f00; display: none; }
     </style>
 </head>
 <body>
 
-    <div class="stats-container">
-        <div class="balance">💰 <span id="balance">1000</span></div>
-        <div class="coef">x<span id="coef">1.00</span></div>
+    <div class="header">
+        <div class="balance">💰 <span id="balanceDisplay">1000</span></div>
+        <div class="coef">x<span id="coefDisplay">1.00</span></div>
     </div>
+
+    <div class="status-msg" id="statusMsg">Оберіть ставку та грайте</div>
 
     <div class="grid" id="grid"></div>
 
     <div class="controls">
-        <input type="number" id="betInput" value="100" min="10">
-        <div class="btns-row">
-            <button id="startBtn" class="btn-start" onclick="startGame()">СТАРТ</button>
-            <button id="cashoutBtn" class="btn-cashout" onclick="cashout()">ЗАБРАТИ</button>
+        <div class="bomb-selector">
+            <button class="bomb-btn" onclick="setBombs(3, this)">3 💣</button>
+            <button class="bomb-btn active" onclick="setBombs(5, this)">5 💣</button>
+            <button class="bomb-btn" onclick="setBombs(10, this)">10 💣</button>
+            <button class="bomb-btn" onclick="setBombs(20, this)">20 💣</button>
+        </div>
+
+        <div class="bet-box">
+            <input type="number" id="betInput" placeholder="Ставка" value="100">
+            <button id="startBtn" class="main-btn btn-start" onclick="startGame()">СТАРТ</button>
+            <button id="cashoutBtn" class="main-btn btn-cashout" onclick="cashout()">CASH</button>
         </div>
     </div>
 
@@ -46,17 +64,25 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        let balance = parseInt(localStorage.getItem('mines_balance')) || 1000;
+        let balance = parseInt(localStorage.getItem('m_bal')) || 1000;
         let bet = 0;
         let coef = 1.0;
-        let bombs = [];
+        let bombsCount = 5;
+        let bombPositions = [];
         let gameActive = false;
-        let safeClicks = 0;
+        let openedCells = 0;
+
+        function setBombs(count, btn) {
+            if (gameActive) return;
+            bombsCount = count;
+            document.querySelectorAll('.bomb-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
 
         function updateUI() {
-            document.getElementById('balance').innerText = balance;
-            document.getElementById('coef').innerText = coef.toFixed(2);
-            localStorage.setItem('mines_balance', balance);
+            document.getElementById('balanceDisplay').innerText = balance;
+            document.getElementById('coefDisplay').innerText = coef.toFixed(2);
+            localStorage.setItem('m_bal', balance);
         }
 
         function createGrid() {
@@ -65,78 +91,96 @@
             for (let i = 0; i < 25; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
-                cell.onclick = () => clickCell(cell, i);
+                cell.id = 'cell-' + i;
+                cell.onclick = () => clickCell(i);
                 grid.appendChild(cell);
             }
         }
 
         function startGame() {
-            bet = parseInt(document.getElementById('betInput').value);
-            if (bet > balance || bet <= 0) {
-                tg.showAlert("Недостатньо грошей або невірна ставка!");
+            let inputVal = document.getElementById('betInput').value;
+            bet = parseInt(inputVal);
+
+            if (isNaN(bet) || bet <= 0 || bet > balance) {
+                document.getElementById('statusMsg').innerText = "❌ Невірна ставка!";
                 return;
             }
 
             balance -= bet;
             coef = 1.0;
-            safeClicks = 0;
+            openedCells = 0;
             gameActive = true;
-            bombs = [];
-            while(bombs.length < 5) {
+            bombPositions = [];
+
+            while(bombPositions.length < bombsCount) {
                 let r = Math.floor(Math.random() * 25);
-                if(!bombs.includes(r)) bombs.push(r);
+                if(!bombPositions.includes(r)) bombPositions.push(r);
             }
 
             createGrid();
-            document.getElementById('grid').classList.add('active');
             document.getElementById('startBtn').style.display = 'none';
             document.getElementById('cashoutBtn').style.display = 'block';
+            document.getElementById('statusMsg').innerText = "💎 Шукай діаманти!";
+            document.getElementById('statusMsg').style.color = "#bbb";
+            document.getElementById('betInput').disabled = true;
             updateUI();
         }
 
-        function clickCell(cell, index) {
-            if (!gameActive || cell.innerText !== '') return;
+        function clickCell(idx) {
+            if (!gameActive) return;
+            const cell = document.getElementById('cell-' + idx);
+            if (cell.classList.contains('disabled') || cell.innerText !== '') return;
 
-            if (bombs.includes(index)) {
-                // ПРОГРАШ
+            if (bombPositions.includes(idx)) {
                 cell.innerText = '💣';
                 cell.classList.add('lose');
-                endGame(false);
+                finishGame(false);
             } else {
-                // УСПІХ
                 cell.innerText = '💎';
                 cell.classList.add('win');
-                safeClicks++;
-                coef += 0.25 + (safeClicks * 0.05); // Коефіцієнт росте
+                cell.classList.add('disabled');
+                openedCells++;
+                
+                // Розрахунок коефіцієнту залежно від кількості бомб
+                let multiplier = bombsCount / 10;
+                coef += 0.1 + multiplier + (openedCells * 0.02);
+                
+                document.getElementById('statusMsg').innerText = "Так тримати! +x" + coef.toFixed(2);
                 updateUI();
                 tg.HapticFeedback.impactOccurred('medium');
             }
         }
 
         function cashout() {
-            if (!gameActive || safeClicks === 0) return;
+            if (!gameActive || openedCells === 0) return;
             let win = Math.floor(bet * coef);
             balance += win;
-            tg.showAlert(`Ви виграли ${win}!`);
-            endGame(true);
+            document.getElementById('statusMsg').innerText = "✅ Виграш: " + win + "!";
+            document.getElementById('statusMsg').style.color = "#4caf50";
+            finishGame(true);
         }
 
-        function endGame(isWin) {
+        function finishGame(isWin) {
             gameActive = false;
-            document.getElementById('grid').classList.remove('active');
             document.getElementById('startBtn').style.display = 'block';
             document.getElementById('cashoutBtn').style.display = 'none';
+            document.getElementById('betInput').disabled = false;
 
-            // Показуємо всі бомби
-            const cells = document.getElementsByClassName('cell');
-            bombs.forEach(b => {
-                if (cells[b].innerText === '') {
-                    cells[b].innerText = '💣';
-                    cells[b].style.opacity = '0.5';
+            // Відкриваємо всі бомби
+            bombPositions.forEach(pos => {
+                const bCell = document.getElementById('cell-' + pos);
+                if (!bCell.classList.contains('lose')) {
+                    bCell.innerText = '💣';
+                    bCell.style.opacity = "0.5";
                 }
             });
 
-            if (!isWin) {
+            // Блокуємо всі клітинки
+            document.querySelectorAll('.cell').forEach(c => c.classList.add('disabled'));
+
+            if (!isWin && bombPositions.length > 0) {
+                document.getElementById('statusMsg').innerText = "💥 Ви підірвалися!";
+                document.getElementById('statusMsg').style.color = "#ff5252";
                 tg.HapticFeedback.notificationOccurred('error');
             }
             updateUI();
