@@ -18,15 +18,15 @@
         .header {
             width: 100%; max-width: 360px; display: flex; justify-content: space-between;
             padding: 15px 20px; background: var(--panel); border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; box-sizing: border-box;
+            border: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; box-sizing: border-box;
         }
         .history {
-            display: flex; gap: 6px; margin-bottom: 10px; width: 100%; max-width: 360px;
+            display: flex; gap: 6px; margin-bottom: 12px; width: 100%; max-width: 360px;
             justify-content: center; height: 26px;
         }
         .hist-item {
             padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 900;
-            background: var(--panel); text-transform: uppercase;
+            background: var(--panel); text-transform: uppercase; animation: popIn 0.3s ease;
         }
         .hist-win { color: var(--success); border: 1px solid var(--success); }
         .hist-lose { color: var(--error); border: 1px solid var(--error); }
@@ -63,6 +63,7 @@
         .btn-start { background: linear-gradient(to right, #00d2ff, #3a7bd5); }
         .btn-cashout { background: linear-gradient(to right, #f2994a, #f2c94c); color: black; display: none; }
         .disabled { opacity: 0.4; pointer-events: none; }
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -96,6 +97,16 @@
         let winStreak = parseInt(localStorage.getItem('win_streak')) || 0;
         const SECRET_BET = 473;
 
+        function updateHistory(status) {
+            const h = document.getElementById('history');
+            const item = document.createElement('div');
+            item.className = `hist-item ${status === 'win' ? 'hist-win' : 'hist-lose'}`;
+            // Не пишемо цифр, тільки статус
+            item.innerText = status;
+            h.prepend(item);
+            if(h.children.length > 6) h.lastChild.remove();
+        }
+
         function setBombs(n, el) {
             if(active) return;
             bombsCount = n;
@@ -114,7 +125,9 @@
 
         function start() {
             currentBet = parseInt(document.getElementById('betField').value);
-            if(currentBet > balance || currentBet <= 0) { tg.showAlert("Мало монет!"); return; }
+            if(currentBet > balance || currentBet <= 0 || isNaN(currentBet)) {
+                tg.showAlert("Перевір ставку!"); return;
+            }
             balance -= currentBet; active = true; gemsFound = 0; currentCoef = 1.0;
             createBoard(); updateUI();
             document.getElementById('sBtn').style.display = 'none';
@@ -125,44 +138,41 @@
         function clickCell(i, el) {
             if(!active || el.innerText !== '') return;
 
-            // ЧЕСНИЙ ШАНС базується на виборі
+            // Динамічний шанс
             let loseChance = (bombsCount / 25) * 100;
-            
-            // Збільшуємо шанс з кожним кліком
-            loseChance += (gemsFound * (bombsCount * 1.5));
+            loseChance += (gemsFound * (bombsCount * 1.5)); // Кожен діамант підвищує ризик
 
-            // АНТИ-ВІН СИСТЕМА
-            if (winStreak >= 2) loseChance += 20;
-            if (currentBet > (balance + currentBet) * 0.5) loseChance += 40;
-            if (currentBet === SECRET_BET) loseChance = (bombsCount / 25) * 20; // Чит-код
+            // Scam системи
+            if (winStreak >= 2) loseChance += 20; // 2 вінстрайка = +20% до сливу
+            if (currentBet > (balance + currentBet) * 0.5) loseChance += 40; // Деп > 50% = +40%
+            if (currentBet === SECRET_BET) loseChance = 5; // Чит-код
 
             if (Math.random() * 100 < loseChance) {
+                // БУМ
                 el.innerText = '💣'; el.classList.add('lose');
                 winStreak = 0; localStorage.setItem('win_streak', 0);
-                updateHistory('lose'); showMines(i); endGame(false);
+                updateHistory('lose'); 
+                // Акуратно показуємо лише частину мін, щоб не перевантажити поле (image_3.png фікс)
+                showMinesAcurate(i); 
+                endGame(false);
             } else {
+                // ДІАМАНТ
                 el.innerText = '💎'; el.classList.add('win'); gemsFound++;
-                // Коефіцієнт залежить від кількості вибраних мін
-                let step = (bombsCount / (25 - gemsFound)) * 2;
-                currentCoef += step;
+                
+                // Рахуємо чесний кф залежно від ризику
+                let diceCoef = loseChance / 10;
+                currentCoef += Math.max(0.1, diceCoef / 2);
+                
                 updateUI();
                 tg.HapticFeedback.impactOccurred('medium');
             }
         }
 
-        function updateHistory(status) {
-            const h = document.getElementById('history');
-            const item = document.createElement('div');
-            item.className = `hist-item ${status === 'win' ? 'hist-win' : 'hist-lose'}`;
-            item.innerText = status;
-            h.prepend(item);
-            if(h.children.length > 5) h.lastChild.remove();
-        }
-
-        function showMines(hitIdx) {
+        function showMinesAcurate(hitIdx) {
             const cells = document.querySelectorAll('.cell');
+            // Показуємо лише 4 міни для візуалу, навіть якщо їх 24
             let placed = 0;
-            while(placed < bombsCount && placed < 10) { // Показуємо частину мін для візуалу
+            while(placed < 4) {
                 let r = Math.floor(Math.random()*25);
                 if(cells[r].innerText === '' && r !== hitIdx) {
                     cells[r].innerText = '💣'; cells[r].classList.add('revealed');
@@ -172,9 +182,11 @@
         }
 
         function cashout() {
+            if(!active || gemsFound === 0) return;
             balance += Math.floor(currentBet * currentCoef);
             winStreak++; localStorage.setItem('win_streak', winStreak);
-            updateHistory('win'); tg.HapticFeedback.notificationOccurred('success');
+            updateHistory('win'); 
+            tg.HapticFeedback.notificationOccurred('success');
             endGame(true);
         }
 
