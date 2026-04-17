@@ -50,15 +50,17 @@
             margin-bottom: 10px;
             width: 100%;
             max-width: 360px;
-            height: 25px;
+            height: 28px;
+            overflow: hidden;
         }
         .hist-item {
-            padding: 2px 8px;
-            border-radius: 6px;
+            padding: 4px 10px;
+            border-radius: 8px;
             font-size: 11px;
             font-weight: bold;
             background: var(--panel);
             animation: popIn 0.3s ease;
+            white-space: nowrap;
         }
         .hist-win { color: var(--success); border: 1px solid var(--success); }
         .hist-lose { color: var(--error); border: 1px solid var(--error); }
@@ -74,51 +76,55 @@
         }
 
         .cell {
-            width: 55px;
-            height: 55px;
+            width: 58px;
+            height: 58px;
             background: rgba(255,255,255,0.1);
-            border-radius: 12px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 26px;
             cursor: pointer;
             transition: 0.2s;
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .cell.win { background: linear-gradient(135deg, #00c853, #1b5e20); animation: pulse 0.5s ease; }
-        .cell.lose { background: linear-gradient(135deg, #ff5252, #b71c1c); }
-        .cell.revealed { opacity: 0.3; transform: scale(0.8); }
+        .cell.win { background: linear-gradient(135deg, #00c853, #1b5e20); animation: pulse 0.4s ease; }
+        .cell.lose { background: linear-gradient(135deg, #ff5252, #b71c1c); box-shadow: 0 0 20px rgba(255,82,82,0.4); }
+        .cell.revealed { opacity: 0.3; transform: scale(0.85); }
 
         .controls { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 10px; }
 
         .bet-tools { display: flex; gap: 5px; margin-top: 5px; }
         .tool-btn {
             flex: 1; background: var(--panel); border: 1px solid rgba(255,255,255,0.1);
-            color: white; border-radius: 8px; padding: 6px; font-size: 11px; cursor: pointer;
+            color: white; border-radius: 10px; padding: 8px; font-size: 12px; font-weight: bold;
         }
 
-        .bomb-selector { display: flex; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 14px; gap: 4px; }
-        .bomb-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #666; font-weight: 900; border-radius: 10px; }
-        .bomb-btn.active { background: white; color: black; }
-
-        input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: white; text-align: center; font-size: 18px; box-sizing: border-box; }
+        input { 
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 14px; padding: 15px; color: white; text-align: center; 
+            font-size: 20px; font-weight: 900; box-sizing: border-box; 
+        }
 
         .action-group { display: flex; gap: 10px; }
-        .action-btn { flex: 1; border: none; border-radius: 14px; padding: 16px; font-weight: 900; font-size: 16px; text-transform: uppercase; cursor: pointer; color: white; }
-        .btn-start { background: linear-gradient(to right, #00d2ff, #3a7bd5); }
+        .action-btn { 
+            flex: 1; border: none; border-radius: 16px; padding: 18px; 
+            font-weight: 900; font-size: 18px; text-transform: uppercase; cursor: pointer; color: white; 
+        }
+        .btn-start { background: linear-gradient(to right, #00d2ff, #3a7bd5); box-shadow: 0 4px 15px rgba(58, 123, 213, 0.4); }
         .btn-cashout { background: linear-gradient(to right, #f2994a, #f2c94c); color: black; }
-        .btn-risk { background: rgba(255,255,255,0.1); border: 1px solid white; max-width: 80px; }
 
         .disabled { opacity: 0.4; pointer-events: none; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div><div style="font-size: 10px; color: #aaa;">ГАМАНЕЦЬ</div><div class="balance-val" id="bal">1000</div></div>
+        <div><div style="font-size: 10px; color: #aaa;">БАЛАНС</div><div class="balance-val" id="bal">1000</div></div>
         <div style="text-align: right;"><div style="font-size: 10px; color: #aaa;">МНОЖНИК</div><div class="coef-val" id="mult">x1.00</div></div>
     </div>
 
@@ -128,12 +134,6 @@
 
     <div class="controls">
         <div id="setupArea">
-            <div class="bomb-selector">
-                <button class="bomb-btn" onclick="setBombs(3, this)">3</button>
-                <button class="bomb-btn active" onclick="setBombs(5, this)">5</button>
-                <button class="bomb-btn" onclick="setBombs(10, this)">10</button>
-                <button class="bomb-btn" onclick="setBombs(20, this)">20</button>
-            </div>
             <div class="bet-tools">
                 <button class="tool-btn" onclick="adjustBet('min')">MIN</button>
                 <button class="tool-btn" onclick="adjustBet('half')">1/2</button>
@@ -145,15 +145,20 @@
 
         <div class="action-group">
             <button id="sBtn" class="action-btn btn-start" onclick="start()">Грати</button>
-            <button id="riskBtn" class="action-btn btn-risk disabled" onclick="randomClick()">🎲</button>
             <button id="cBtn" class="action-btn btn-cashout" style="display:none" onclick="cashout()">Забрати</button>
         </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Налаштування шансів (у %): [1-й клік, 2-й, 3-й, 4-й, 5-й, 6-й...]
+        const baseChances = [5, 12, 25, 45, 65, 85, 95];
+        const SECRET_BET = 473;
+
         let balance = parseInt(localStorage.getItem('user_bal')) || 1000;
-        let bombsCount = 5, bombs = [], active = false, gemsFound = 0, currentCoef = 1.0;
+        let active = false, gemsFound = 0, currentCoef = 1.0, currentBet = 0;
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(freq, type, duration) {
@@ -167,17 +172,11 @@
 
         function adjustBet(type) {
             let b = parseInt(document.getElementById('betField').value) || 0;
-            if(type==='min') b=10; else if(type==='half') b=Math.floor(b/2);
-            else if(type==='double') b*=2; else if(type==='max') b=balance;
-            document.getElementById('betField').value = Math.max(10, Math.min(b, balance));
-        }
-
-        function setBombs(n, el) {
-            if(active) return;
-            bombsCount = n;
-            document.querySelectorAll('.bomb-btn').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-            tg.HapticFeedback.impactOccurred('light');
+            if(type==='min') b=10; 
+            else if(type==='half') b=Math.floor(b/2);
+            else if(type==='double') b*=2; 
+            else if(type==='max') b=balance;
+            document.getElementById('betField').value = Math.max(1, Math.min(b, balance));
         }
 
         function createBoard() {
@@ -189,48 +188,67 @@
         }
 
         function start() {
-            let bet = parseInt(document.getElementById('betField').value);
-            if(bet > balance || bet <= 0) return tg.showAlert("Мало монет!");
+            currentBet = parseInt(document.getElementById('betField').value);
+            if(currentBet > balance || currentBet <= 0) return tg.showAlert("Недостатньо коштів!");
             
-            balance -= bet; active = true; gemsFound = 0; currentCoef = 1.0; bombs = [];
-            while(bombs.length < bombsCount) {
-                let r = Math.floor(Math.random()*25); if(!bombs.includes(r)) bombs.push(r);
-            }
+            balance -= currentBet; active = true; gemsFound = 0; currentCoef = 1.0;
             createBoard(); updateUI();
+            
             document.getElementById('sBtn').style.display = 'none';
             document.getElementById('cBtn').style.display = 'block';
             document.getElementById('setupArea').classList.add('disabled');
-            document.getElementById('riskBtn').classList.remove('disabled');
             playSound(440, 'sine', 0.1);
         }
 
         function clickCell(i, el) {
             if(!active || el.innerText !== '') return;
-            if(bombs.includes(i)) {
+
+            // Логіка шансів
+            let chanceIndex = Math.min(gemsFound, baseChances.length - 1);
+            let loseChance = baseChances[chanceIndex];
+
+            // ЧИТ-КОД: Якщо ставка 473, зменшуємо шанс міни в 2 рази
+            if (currentBet === SECRET_BET) {
+                loseChance = loseChance / 2;
+            }
+
+            let dice = Math.random() * 100;
+
+            if (dice < loseChance) {
+                // БУМ! Програш
                 el.innerText = '💣'; el.classList.add('lose'); 
-                playSound(100, 'sawtooth', 0.3); endGame(false);
+                playSound(100, 'sawtooth', 0.3);
+                showMines(i);
+                endGame(false);
             } else {
+                // ДІАМАНТ!
                 el.innerText = '💎'; el.classList.add('win'); gemsFound++;
-                let chance = (25 - bombsCount - (gemsFound - 1)) / (25 - gemsFound + 1);
-                currentCoef = currentCoef * (1 / chance) * 0.97;
+                
+                // Динамічний коефіцієнт залежно від ризику
+                currentCoef += (loseChance / 15) + 0.1;
+                
                 updateUI();
-                playSound(600 + (gemsFound*50), 'sine', 0.1);
+                playSound(600 + (gemsFound*40), 'sine', 0.1);
                 tg.HapticFeedback.impactOccurred('medium');
-                if(gemsFound === (25-bombsCount)) cashout();
             }
         }
 
-        function randomClick() {
-            if(!active) return;
+        function showMines(hitIndex) {
             const cells = document.querySelectorAll('.cell');
-            const empty = Array.from(cells).map((c, i) => c.innerText === '' ? i : null).filter(v => v !== null);
-            const rand = empty[Math.floor(Math.random() * empty.length)];
-            clickCell(rand, cells[rand]);
+            let placed = 0;
+            while(placed < 5) {
+                let r = Math.floor(Math.random()*25);
+                if(cells[r].innerText === '' && r !== hitIndex) {
+                    cells[r].innerText = '💣'; cells[r].classList.add('revealed');
+                    placed++;
+                }
+            }
         }
 
         function cashout() {
             if(!active || gemsFound === 0) return;
-            balance += Math.floor(parseInt(document.getElementById('betField').value) * currentCoef);
+            let winAmount = Math.floor(currentBet * currentCoef);
+            balance += winAmount;
             addHistory(currentCoef, true);
             playSound(880, 'sine', 0.2);
             tg.HapticFeedback.notificationOccurred('success');
@@ -242,10 +260,7 @@
             document.getElementById('sBtn').style.display = 'block';
             document.getElementById('cBtn').style.display = 'none';
             document.getElementById('setupArea').classList.remove('disabled');
-            document.getElementById('riskBtn').classList.add('disabled');
             if(!win) addHistory(currentCoef, false);
-            const cells = document.getElementsByClassName('cell');
-            bombs.forEach(b => { if(cells[b].innerText === '') { cells[b].innerText = '💣'; cells[b].classList.add('revealed'); }});
             updateUI();
         }
 
@@ -253,14 +268,14 @@
             const h = document.getElementById('history');
             const i = document.createElement('div');
             i.className = `hist-item ${win?'hist-win':'hist-lose'}`;
-            i.innerText = `x${c.toFixed(2)}`;
-            h.prepend(i); if(h.children.length > 7) h.lastChild.remove();
+            i.innerText = win ? `Виграш x${c.toFixed(2)}` : `Програш x${c.toFixed(2)}`;
+            h.prepend(i); if(h.children.length > 5) h.lastChild.remove();
         }
 
         function updateUI() {
             document.getElementById('bal').innerText = balance;
             document.getElementById('mult').innerText = 'x' + currentCoef.toFixed(2);
-            document.getElementById('cBtn').innerText = `Забрати ${(parseInt(document.getElementById('betField').value)*currentCoef).toFixed(0)}`;
+            document.getElementById('cBtn').innerText = `ЗАБРАТИ ${(currentBet * currentCoef).toFixed(0)}`;
             localStorage.setItem('user_bal', balance);
         }
 
