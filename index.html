@@ -22,7 +22,7 @@
         }
         .history {
             display: flex; gap: 6px; margin-bottom: 8px; width: 100%; max-width: 360px;
-            justify-content: center; height: 26px;
+            justify-content: center; height: 26px; overflow: hidden;
         }
         .hist-item {
             padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 900;
@@ -40,8 +40,8 @@
             font-size: 24px; cursor: pointer; transition: 0.2s;
         }
         .cell.win { background: linear-gradient(135deg, #00c853, #1b5e20); }
-        .cell.lose { background: linear-gradient(135deg, #ff5252, #b71c1c); box-shadow: 0 0 15px var(--error); }
-        .cell.off { opacity: 0.3; transform: scale(0.9); }
+        .cell.lose { background: linear-gradient(135deg, #ff5252, #b71c1c); box-shadow: 0 0 15px var(--error); z-index: 2; }
+        .cell.off { opacity: 0.4; transform: scale(0.9); }
         .controls { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 8px; }
         .bomb-selector { display: flex; background: rgba(0,0,0,0.4); padding: 4px; border-radius: 16px; gap: 4px; }
         .bomb-btn { flex: 1; padding: 12px; border: none; background: transparent; color: #777; font-weight: 900; border-radius: 12px; cursor: pointer; }
@@ -86,6 +86,7 @@
             bombsCount = n;
             document.querySelectorAll('.bomb-btn').forEach(b => b.classList.remove('active'));
             el.classList.add('active');
+            tg.HapticFeedback.impactOccurred('light');
         }
 
         function updateHistory(type) {
@@ -97,25 +98,29 @@
             if(h.children.length > 6) h.lastChild.remove();
         }
 
-        function generateMinesHard() {
+        // Тепер міни генеруються ПОВНІСТЮ рандомно по всьому полю
+        function generateMines() {
             minesLocations = [];
             let pool = Array.from({length: 25}, (_, i) => i);
             for (let i = 0; i < bombsCount; i++) {
-                let r = Math.floor(Math.random() * pool.length);
-                minesLocations.push(pool.splice(r, 1)[0]);
+                let randomIndex = Math.floor(Math.random() * pool.length);
+                minesLocations.push(pool.splice(randomIndex, 1)[0]);
             }
         }
 
         function start() {
             currentBet = parseInt(document.getElementById('betField').value);
             if(currentBet > balance || currentBet <= 0) return;
+            
             balance -= currentBet; active = true; gemsFound = 0; currentCoef = 1.0;
-            generateMinesHard(); // Міни ставляться ОДРАЗУ
+            generateMines(); // Генеруємо до першого кліку
+            
             const g = document.getElementById('grid'); g.innerHTML = '';
             for(let i=0; i<25; i++) {
                 let c = document.createElement('div'); c.className = 'cell';
                 c.onclick = () => clickCell(i, c); g.appendChild(c);
             }
+            
             updateUI();
             document.getElementById('sBtn').style.display = 'none';
             document.getElementById('cBtn').style.display = 'block';
@@ -124,23 +129,20 @@
 
         function clickCell(i, el) {
             if(!active || el.innerText !== '') return;
+
             if(minesLocations.includes(i)) {
                 el.innerText = '💣'; el.classList.add('lose');
                 updateHistory('lose');
                 revealAll(i); endGame();
             } else {
                 el.innerText = '💎'; el.classList.add('win'); gemsFound++;
-                // Жорсткий розрахунок КФ
-                let n = 25, m = bombsCount, g = gemsFound;
-                function combinations(n, k) {
-                    if (k < 0 || k > n) return 0;
-                    if (k === 0 || k === n) return 1;
-                    if (k > n / 2) k = n - k;
-                    let res = 1;
-                    for (let i = 1; i <= k; i++) res = res * (n - i + 1) / i;
-                    return res;
+                // Чесна формула множника
+                let nextGems = gemsFound;
+                let prob = 1;
+                for(let j=0; j<nextGems; j++) {
+                    prob *= (25 - bombsCount - j) / (25 - j);
                 }
-                currentCoef = (combinations(n, g) / combinations(n - m, g)) * 0.95;
+                currentCoef = (1 / prob) * 0.95; // 0.95 - це маржа (RTP)
                 updateUI();
                 tg.HapticFeedback.impactOccurred('medium');
             }
@@ -149,13 +151,17 @@
         function revealAll(hitIdx) {
             const cells = document.querySelectorAll('.cell');
             minesLocations.forEach(idx => {
-                if(idx !== hitIdx) { cells[idx].innerText = '💣'; cells[idx].classList.add('off'); }
+                if(idx !== hitIdx) {
+                    cells[idx].innerText = '💣'; cells[idx].classList.add('off');
+                }
             });
         }
 
         function cashout() {
             balance += Math.floor(currentBet * currentCoef);
-            updateHistory('win'); endGame();
+            updateHistory('win');
+            tg.HapticFeedback.notificationOccurred('success');
+            endGame();
         }
 
         function endGame() {
