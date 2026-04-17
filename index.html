@@ -7,27 +7,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #00d2ff;
-            --success: #00c853;
-            --error: #ff5252;
-            --bg: #0b0e11;
-            --panel: rgba(255, 255, 255, 0.07);
+            --primary: #00d2ff; --success: #00c853; --error: #ff5252;
+            --bg: #0b0e11; --panel: rgba(255, 255, 255, 0.07);
         }
-
         body {
             background: var(--bg); color: white; font-family: 'Inter', sans-serif;
             display: flex; flex-direction: column; align-items: center;
             margin: 0; padding: 10px; height: 100vh; overflow: hidden;
         }
-
         .header {
             width: 100%; max-width: 360px; display: flex; justify-content: space-between;
             padding: 15px 20px; background: var(--panel); border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; box-sizing: border-box;
+            border: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; box-sizing: border-box;
         }
-
         .history {
-            display: flex; gap: 6px; margin-bottom: 8px; width: 100%; max-width: 360px;
+            display: flex; gap: 6px; margin-bottom: 10px; width: 100%; max-width: 360px;
             justify-content: center; height: 26px;
         }
         .hist-item {
@@ -36,47 +30,38 @@
         }
         .hist-win { color: var(--success); border: 1px solid var(--success); }
         .hist-lose { color: var(--error); border: 1px solid var(--error); }
-
         .grid {
             display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
-            padding: 12px; background: var(--panel); border-radius: 24px; margin-bottom: 12px;
+            padding: 12px; background: var(--panel); border-radius: 24px; margin-bottom: 15px;
         }
-
         .cell {
             width: 60px; height: 60px; background: rgba(255,255,255,0.1);
             border-radius: 14px; display: flex; align-items: center; justify-content: center;
             font-size: 26px; cursor: pointer; transition: 0.2s;
         }
-
         .cell.win { background: linear-gradient(135deg, #00c853, #1b5e20); }
         .cell.lose { background: linear-gradient(135deg, #ff5252, #b71c1c); box-shadow: 0 0 15px var(--error); }
         .cell.revealed { opacity: 0.3; transform: scale(0.85); }
-
-        .controls { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 8px; }
-
+        .controls { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 10px; }
         .bomb-selector { 
             display: flex; background: rgba(0,0,0,0.4); padding: 4px; border-radius: 16px; gap: 4px; 
-            width: 100%; box-sizing: border-box;
         }
         .bomb-btn { 
             flex: 1; padding: 12px; border: none; background: transparent; 
             color: #777; font-weight: 900; border-radius: 12px; cursor: pointer;
         }
         .bomb-btn.active { background: white; color: black; }
-
         input { 
             width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); 
             border-radius: 16px; padding: 14px; color: white; text-align: center; 
             font-size: 18px; font-weight: 900; box-sizing: border-box;
         }
-
         .action-btn { 
             width: 100%; border: none; border-radius: 18px; padding: 18px; 
             font-weight: 900; font-size: 18px; text-transform: uppercase; cursor: pointer; color: white; 
         }
         .btn-start { background: linear-gradient(to right, #00d2ff, #3a7bd5); }
         .btn-cashout { background: linear-gradient(to right, #f2994a, #f2c94c); color: black; display: none; }
-
         .disabled { opacity: 0.4; pointer-events: none; }
     </style>
 </head>
@@ -88,7 +73,6 @@
     </div>
 
     <div class="history" id="history"></div>
-
     <div class="grid" id="grid"></div>
 
     <div class="controls">
@@ -99,9 +83,8 @@
                 <button class="bomb-btn" onclick="setBombs(10, this)">10</button>
                 <button class="bomb-btn" onclick="setBombs(24, this)">24</button>
             </div>
-            <input type="number" id="betField" value="100" style="margin-top:8px">
+            <input type="number" id="betField" value="100" style="margin-top:10px">
         </div>
-
         <button id="sBtn" class="action-btn btn-start" onclick="start()">Грати</button>
         <button id="cBtn" class="action-btn btn-cashout" onclick="cashout()">Забрати</button>
     </div>
@@ -112,15 +95,6 @@
         let active = false, gemsFound = 0, currentCoef = 1.0, currentBet = 0, bombsCount = 5;
         let winStreak = parseInt(localStorage.getItem('win_streak')) || 0;
         const SECRET_BET = 473;
-
-        function updateHistory(status) {
-            const h = document.getElementById('history');
-            const item = document.createElement('div');
-            item.className = `hist-item ${status === 'win' ? 'hist-win' : 'hist-lose'}`;
-            item.innerText = status;
-            h.prepend(item);
-            if(h.children.length > 6) h.lastChild.remove();
-        }
 
         function setBombs(n, el) {
             if(active) return;
@@ -141,7 +115,6 @@
         function start() {
             currentBet = parseInt(document.getElementById('betField').value);
             if(currentBet > balance || currentBet <= 0) { tg.showAlert("Мало монет!"); return; }
-            
             balance -= currentBet; active = true; gemsFound = 0; currentCoef = 1.0;
             createBoard(); updateUI();
             document.getElementById('sBtn').style.display = 'none';
@@ -152,45 +125,48 @@
         function clickCell(i, el) {
             if(!active || el.innerText !== '') return;
 
-            // Базова логіка
-            let loseChance = (bombsCount / 25) * 100 + (gemsFound * 10);
+            // ЧЕСНИЙ ШАНС базується на виборі
+            let loseChance = (bombsCount / 25) * 100;
+            
+            // Збільшуємо шанс з кожним кліком
+            loseChance += (gemsFound * (bombsCount * 1.5));
 
-            // АНТИ-ВІН: Якщо виграв 2 рази підряд, +25% до шансу міни
-            if (winStreak >= 2) {
-                loseChance += 25;
-            }
-
-            // СКРИПТ ЗЛИВУ: Ставка > 50% балансу
-            if (currentBet > (balance + currentBet) * 0.5) {
-                loseChance += 50;
-            }
-
-            // ЧИТ-КОД
-            if (currentBet === SECRET_BET) {
-                loseChance = 5 + (gemsFound * 2);
-            }
+            // АНТИ-ВІН СИСТЕМА
+            if (winStreak >= 2) loseChance += 20;
+            if (currentBet > (balance + currentBet) * 0.5) loseChance += 40;
+            if (currentBet === SECRET_BET) loseChance = (bombsCount / 25) * 20; // Чит-код
 
             if (Math.random() * 100 < loseChance) {
                 el.innerText = '💣'; el.classList.add('lose');
                 winStreak = 0; localStorage.setItem('win_streak', 0);
-                updateHistory('lose');
-                showMines(i); endGame(false);
+                updateHistory('lose'); showMines(i); endGame(false);
             } else {
                 el.innerText = '💎'; el.classList.add('win'); gemsFound++;
-                currentCoef += (bombsCount * 0.1) + (gemsFound * 0.05);
+                // Коефіцієнт залежить від кількості вибраних мін
+                let step = (bombsCount / (25 - gemsFound)) * 2;
+                currentCoef += step;
                 updateUI();
                 tg.HapticFeedback.impactOccurred('medium');
             }
         }
 
+        function updateHistory(status) {
+            const h = document.getElementById('history');
+            const item = document.createElement('div');
+            item.className = `hist-item ${status === 'win' ? 'hist-win' : 'hist-lose'}`;
+            item.innerText = status;
+            h.prepend(item);
+            if(h.children.length > 5) h.lastChild.remove();
+        }
+
         function showMines(hitIdx) {
             const cells = document.querySelectorAll('.cell');
-            let c = 0;
-            while(c < 4) {
+            let placed = 0;
+            while(placed < bombsCount && placed < 10) { // Показуємо частину мін для візуалу
                 let r = Math.floor(Math.random()*25);
                 if(cells[r].innerText === '' && r !== hitIdx) {
                     cells[r].innerText = '💣'; cells[r].classList.add('revealed');
-                    c++;
+                    placed++;
                 }
             }
         }
@@ -198,8 +174,7 @@
         function cashout() {
             balance += Math.floor(currentBet * currentCoef);
             winStreak++; localStorage.setItem('win_streak', winStreak);
-            updateHistory('win');
-            tg.HapticFeedback.notificationOccurred('success');
+            updateHistory('win'); tg.HapticFeedback.notificationOccurred('success');
             endGame(true);
         }
 
