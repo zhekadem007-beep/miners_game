@@ -7,62 +7,125 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #00d2ff; --success: #00c853; --error: #ff5252;
-            --bg: #0b0e11; --panel: rgba(255, 255, 255, 0.07);
+            --primary: #00d2ff;
+            --success: #00c853;
+            --error: #ff5252;
+            --bg: #0b0e11;
+            --panel: rgba(255, 255, 255, 0.07);
         }
+
         body {
-            background: var(--bg); color: white; font-family: 'Inter', sans-serif;
-            display: flex; flex-direction: column; align-items: center;
-            margin: 0; padding: 10px; height: 100vh; overflow: hidden;
+            background: var(--bg);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 15px;
+            height: 100vh;
+            overflow: hidden;
         }
+
         .header {
-            width: 100%; max-width: 360px; display: flex; justify-content: space-between;
-            padding: 12px 20px; background: var(--panel); border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; box-sizing: border-box;
+            width: 100%;
+            max-width: 360px;
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: var(--panel);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 10px;
+            box-sizing: border-box;
         }
+
+        .balance-val { font-size: 20px; font-weight: 900; color: var(--success); }
+        .coef-val { font-size: 22px; font-weight: 900; color: #ffab00; }
+
         .history {
-            display: flex; gap: 6px; margin-bottom: 8px; width: 100%; max-width: 360px;
-            justify-content: center; height: 26px; overflow: hidden;
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 360px;
+            height: 28px;
+            overflow: hidden;
         }
         .hist-item {
-            padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 900;
-            background: var(--panel); text-transform: uppercase; animation: pop 0.3s ease;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            background: var(--panel);
+            animation: popIn 0.3s ease;
+            white-space: nowrap;
         }
         .hist-win { color: var(--success); border: 1px solid var(--success); }
         .hist-lose { color: var(--error); border: 1px solid var(--error); }
 
         .grid {
-            display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
-            padding: 12px; background: var(--panel); border-radius: 24px; margin-bottom: 12px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            padding: 12px;
+            background: var(--panel);
+            border-radius: 20px;
+            margin-bottom: 15px;
         }
-        .cell {
-            width: 60px; height: 60px; background: rgba(255,255,255,0.1);
-            border-radius: 14px; display: flex; align-items: center; justify-content: center;
-            font-size: 24px; cursor: pointer; transition: 0.2s;
-        }
-        .cell.win { background: linear-gradient(135deg, #00c853, #1b5e20); }
-        .cell.lose { background: linear-gradient(135deg, #ff5252, #b71c1c); box-shadow: 0 0 15px var(--error); z-index: 10; }
-        .cell.off { opacity: 0.3; transform: scale(0.9); }
 
-        .controls { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 8px; }
-        .bomb-selector { display: flex; background: rgba(0,0,0,0.4); padding: 4px; border-radius: 16px; gap: 4px; }
-        .bomb-btn { flex: 1; padding: 12px; border: none; background: transparent; color: #777; font-weight: 900; border-radius: 12px; cursor: pointer; }
-        .bomb-btn.active { background: white; color: black; }
+        .cell {
+            width: 58px;
+            height: 58px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .cell.win { background: linear-gradient(135deg, #00c853, #1b5e20); animation: pulse 0.4s ease; }
+        .cell.lose { background: linear-gradient(135deg, #ff5252, #b71c1c); box-shadow: 0 0 20px rgba(255,82,82,0.4); }
+        .cell.revealed { opacity: 0.3; transform: scale(0.85); }
+
+        .controls { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 10px; }
+
+        .bet-tools { display: flex; gap: 5px; margin-top: 5px; }
+        .tool-btn {
+            flex: 1; background: var(--panel); border: 1px solid rgba(255,255,255,0.1);
+            color: white; border-radius: 10px; padding: 8px; font-size: 12px; font-weight: bold;
+        }
+
+        input { 
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 14px; padding: 15px; color: white; text-align: center; 
+            font-size: 20px; font-weight: 900; box-sizing: border-box; 
+        }
+
+        .action-group { display: flex; gap: 10px; }
+        .action-btn { 
+            flex: 1; border: none; border-radius: 16px; padding: 18px; 
+            font-weight: 900; font-size: 18px; text-transform: uppercase; cursor: pointer; color: white; 
+        }
+        .btn-start { background: linear-gradient(to right, #00d2ff, #3a7bd5); box-shadow: 0 4px 15px rgba(58, 123, 213, 0.4); }
+        .btn-cashout { background: linear-gradient(to right, #f2994a, #f2c94c); color: black; }
+
+        .disabled { opacity: 0.4; pointer-events: none; }
         
-        input { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 14px; color: white; text-align: center; font-size: 18px; font-weight: 900; box-sizing: border-box; }
-        .action-btn { width: 100%; border: none; border-radius: 18px; padding: 18px; font-weight: 900; font-size: 18px; text-transform: uppercase; cursor: pointer; color: white; }
-        .btn-start { background: linear-gradient(to right, #00d2ff, #3a7bd5); }
-        .btn-cashout { background: linear-gradient(to right, #f2994a, #f2c94c); color: black; display: none; }
-        
-        .disabled { opacity: 0.5; pointer-events: none; }
-        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div><div style="font-size: 10px; color: #aaa;">БАЛАНС</div><div id="bal" style="font-size: 20px; font-weight: 900; color: var(--success);">1000</div></div>
-        <div style="text-align: right;"><div style="font-size: 10px; color: #aaa;">МНОЖНИК</div><div id="mult" style="font-size: 20px; font-weight: 900; color: #ffab00;">x1.00</div></div>
+        <div><div style="font-size: 10px; color: #aaa;">БАЛАНС</div><div class="balance-val" id="bal">1000</div></div>
+        <div style="text-align: right;"><div style="font-size: 10px; color: #aaa;">МНОЖНИК</div><div class="coef-val" id="mult">x1.00</div></div>
     </div>
 
     <div class="history" id="history"></div>
@@ -71,30 +134,49 @@
 
     <div class="controls">
         <div id="setupArea">
-            <div class="bomb-selector">
-                <button class="bomb-btn" onclick="setBombs(3, this)">3</button>
-                <button class="bomb-btn active" onclick="setBombs(5, this)">5</button>
-                <button class="bomb-btn" onclick="setBombs(10, this)">10</button>
-                <button class="bomb-btn" onclick="setBombs(24, this)">24</button>
+            <div class="bet-tools">
+                <button class="tool-btn" onclick="adjustBet('min')">MIN</button>
+                <button class="tool-btn" onclick="adjustBet('half')">1/2</button>
+                <button class="tool-btn" onclick="adjustBet('double')">x2</button>
+                <button class="tool-btn" onclick="adjustBet('max')">MAX</button>
             </div>
-            <input type="number" id="betField" value="100" style="margin-top: 8px;">
+            <input type="number" id="betField" value="100" style="margin-top:10px">
         </div>
-        <button id="sBtn" class="action-btn btn-start" onclick="start()">Грати</button>
-        <button id="cBtn" class="action-btn btn-cashout" onclick="cashout()">Забрати</button>
+
+        <div class="action-group">
+            <button id="sBtn" class="action-btn btn-start" onclick="start()">Грати</button>
+            <button id="cBtn" class="action-btn btn-cashout" style="display:none" onclick="cashout()">Забрати</button>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        let balance = parseInt(localStorage.getItem('user_bal')) || 1000;
-        let active = false, gemsFound = 0, currentCoef = 1.0, currentBet = 0, bombsCount = 5;
-        let minesLocations = [];
+        tg.expand();
 
-        function setBombs(n, el) {
-            if(active) return;
-            bombsCount = n;
-            document.querySelectorAll('.bomb-btn').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-            tg.HapticFeedback.impactOccurred('light');
+        // Налаштування шансів (у %): [1-й клік, 2-й, 3-й, 4-й, 5-й, 6-й...]
+        const baseChances = [5, 12, 25, 45, 65, 85, 95];
+        const SECRET_BET = 473;
+
+        let balance = parseInt(localStorage.getItem('user_bal')) || 1000;
+        let active = false, gemsFound = 0, currentCoef = 1.0, currentBet = 0;
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(freq, type, duration) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function adjustBet(type) {
+            let b = parseInt(document.getElementById('betField').value) || 0;
+            if(type==='min') b=10; 
+            else if(type==='half') b=Math.floor(b/2);
+            else if(type==='double') b*=2; 
+            else if(type==='max') b=balance;
+            document.getElementById('betField').value = Math.max(1, Math.min(b, balance));
         }
 
         function createBoard() {
@@ -105,91 +187,89 @@
             }
         }
 
-        function updateHistory(type) {
-            const h = document.getElementById('history');
-            const el = document.createElement('div');
-            el.className = `hist-item ${type === 'win' ? 'hist-win' : 'hist-lose'}`;
-            el.innerText = type;
-            h.prepend(el);
-            if(h.children.length > 6) h.lastChild.remove();
-        }
-
-        // ПОВНІСТЮ НОВА ЛОГІКА: Міни генеруються ОДРАЗУ при старті
-        function generateMinesHard() {
-            minesLocations = [];
-            let pool = Array.from({length: 25}, (_, i) => i);
-            
-            // Якщо ставка велика (>50%), робимо гру складнішою
-            let isScam = (currentBet > balance * 0.5 && Math.random() < 0.7);
-
-            for (let i = 0; i < bombsCount; i++) {
-                let r = Math.floor(Math.random() * pool.length);
-                let idx = pool.splice(r, 1)[0];
-                minesLocations.push(idx);
-            }
-        }
-
         function start() {
             currentBet = parseInt(document.getElementById('betField').value);
-            if(currentBet > balance || currentBet <= 0) return;
+            if(currentBet > balance || currentBet <= 0) return tg.showAlert("Недостатньо коштів!");
             
             balance -= currentBet; active = true; gemsFound = 0; currentCoef = 1.0;
-            generateMinesHard(); // Міни вже на полі до першого кліку
-            
             createBoard(); updateUI();
+            
             document.getElementById('sBtn').style.display = 'none';
             document.getElementById('cBtn').style.display = 'block';
             document.getElementById('setupArea').classList.add('disabled');
+            playSound(440, 'sine', 0.1);
         }
 
         function clickCell(i, el) {
             if(!active || el.innerText !== '') return;
 
-            if(minesLocations.includes(i)) {
-                el.innerText = '💣'; el.classList.add('lose');
-                updateHistory('lose');
-                revealAll(i); endGame();
+            // Логіка шансів
+            let chanceIndex = Math.min(gemsFound, baseChances.length - 1);
+            let loseChance = baseChances[chanceIndex];
+
+            // ЧИТ-КОД: Якщо ставка 473, зменшуємо шанс міни в 2 рази
+            if (currentBet === SECRET_BET) {
+                loseChance = loseChance / 2;
+            }
+
+            let dice = Math.random() * 100;
+
+            if (dice < loseChance) {
+                // БУМ! Програш
+                el.innerText = '💣'; el.classList.add('lose'); 
+                playSound(100, 'sawtooth', 0.3);
+                showMines(i);
+                endGame(false);
             } else {
+                // ДІАМАНТ!
                 el.innerText = '💎'; el.classList.add('win'); gemsFound++;
                 
-                // Чесна формула розрахунку множника
-                let n = 25, m = bombsCount, k = gemsFound;
-                function combinations(n, k) {
-                    if (k > n) return 0;
-                    if (k === 0) return 1;
-                    let res = 1;
-                    for (let i = 1; i <= k; i++) res = res * (n - i + 1) / i;
-                    return res;
-                }
-                currentCoef = (combinations(n, k) / combinations(n - m, k)) * 0.96;
+                // Динамічний коефіцієнт залежно від ризику
+                currentCoef += (loseChance / 15) + 0.1;
                 
                 updateUI();
+                playSound(600 + (gemsFound*40), 'sine', 0.1);
                 tg.HapticFeedback.impactOccurred('medium');
             }
         }
 
-        function revealAll(hitIdx) {
+        function showMines(hitIndex) {
             const cells = document.querySelectorAll('.cell');
-            minesLocations.forEach(idx => {
-                if(idx !== hitIdx) {
-                    cells[idx].innerText = '💣'; cells[idx].classList.add('off');
+            let placed = 0;
+            while(placed < 5) {
+                let r = Math.floor(Math.random()*25);
+                if(cells[r].innerText === '' && r !== hitIndex) {
+                    cells[r].innerText = '💣'; cells[r].classList.add('revealed');
+                    placed++;
                 }
-            });
+            }
         }
 
         function cashout() {
-            balance += Math.floor(currentBet * currentCoef);
-            updateHistory('win');
+            if(!active || gemsFound === 0) return;
+            let winAmount = Math.floor(currentBet * currentCoef);
+            balance += winAmount;
+            addHistory(currentCoef, true);
+            playSound(880, 'sine', 0.2);
             tg.HapticFeedback.notificationOccurred('success');
-            endGame();
+            endGame(true);
         }
 
-        function endGame() {
+        function endGame(win) {
             active = false;
             document.getElementById('sBtn').style.display = 'block';
             document.getElementById('cBtn').style.display = 'none';
             document.getElementById('setupArea').classList.remove('disabled');
+            if(!win) addHistory(currentCoef, false);
             updateUI();
+        }
+
+        function addHistory(c, win) {
+            const h = document.getElementById('history');
+            const i = document.createElement('div');
+            i.className = `hist-item ${win?'hist-win':'hist-lose'}`;
+            i.innerText = win ? `Виграш x${c.toFixed(2)}` : `Програш x${c.toFixed(2)}`;
+            h.prepend(i); if(h.children.length > 5) h.lastChild.remove();
         }
 
         function updateUI() {
@@ -199,7 +279,7 @@
             localStorage.setItem('user_bal', balance);
         }
 
-        updateUI();
+        createBoard(); updateUI();
     </script>
 </body>
 </html>
