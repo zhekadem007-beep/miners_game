@@ -1,184 +1,253 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #00d2ff; --success: #00c853; --error: #ff5252;
-            --bg: #0b0e11; --panel: rgba(255, 255, 255, 0.07);
-        }
-        body {
-            background: var(--bg); color: white; font-family: 'Inter', sans-serif;
-            display: flex; flex-direction: column; align-items: center;
-            margin: 0; padding: 10px; height: 100vh; overflow: hidden;
-        }
-        .header {
-            width: 100%; max-width: 360px; display: flex; justify-content: space-between;
-            padding: 12px 20px; background: var(--panel); border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; box-sizing: border-box;
-        }
-        .history {
-            display: flex; gap: 6px; margin-bottom: 8px; width: 100%; max-width: 360px;
-            justify-content: center; height: 26px; overflow: hidden;
-        }
-        .hist-item {
-            padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 900;
-            background: var(--panel); text-transform: uppercase; animation: pop 0.3s ease;
-        }
-        .hist-win { color: var(--success); border: 1px solid var(--success); }
-        .hist-lose { color: var(--error); border: 1px solid var(--error); }
-        .grid {
-            display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
-            padding: 12px; background: var(--panel); border-radius: 24px; margin-bottom: 12px;
-        }
-        .cell {
-            width: 60px; height: 60px; background: rgba(255,255,255,0.1);
-            border-radius: 14px; display: flex; align-items: center; justify-content: center;
-            font-size: 24px; cursor: pointer; transition: 0.2s;
-        }
-        .cell.win { background: linear-gradient(135deg, #00c853, #1b5e20); }
-        .cell.lose { background: linear-gradient(135deg, #ff5252, #b71c1c); box-shadow: 0 0 15px var(--error); z-index: 2; }
-        .cell.off { opacity: 0.4; transform: scale(0.9); }
-        .controls { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 8px; }
-        .bomb-selector { display: flex; background: rgba(0,0,0,0.4); padding: 4px; border-radius: 16px; gap: 4px; }
-        .bomb-btn { flex: 1; padding: 12px; border: none; background: transparent; color: #777; font-weight: 900; border-radius: 12px; cursor: pointer; }
-        .bomb-btn.active { background: white; color: black; }
-        input { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 14px; color: white; text-align: center; font-size: 18px; font-weight: 900; box-sizing: border-box; }
-        .action-btn { width: 100%; border: none; border-radius: 18px; padding: 18px; font-weight: 900; font-size: 18px; text-transform: uppercase; cursor: pointer; color: white; }
-        .btn-start { background: linear-gradient(to right, #00d2ff, #3a7bd5); }
-        .btn-cashout { background: linear-gradient(to right, #f2994a, #f2c94c); color: black; display: none; }
-        .disabled { opacity: 0.5; pointer-events: none; }
-        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+:root{
+    --bg:#0b0e11;
+    --panel:rgba(255,255,255,0.07);
+    --win:#00c853;
+    --lose:#ff5252;
+}
+
+body{
+    margin:0;
+    background:var(--bg);
+    color:white;
+    font-family:Inter;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:10px;
+}
+
+.header{
+    width:100%;
+    max-width:360px;
+    display:flex;
+    justify-content:space-between;
+    background:var(--panel);
+    padding:12px;
+    border-radius:16px;
+    margin-bottom:8px;
+}
+
+.history{
+    display:flex;
+    gap:6px;
+    width:100%;
+    max-width:360px;
+    margin-bottom:8px;
+    overflow:hidden;
+}
+
+.hist{
+    font-size:10px;
+    padding:4px 6px;
+    border-radius:6px;
+    background:rgba(255,255,255,0.08);
+}
+.winH{border:1px solid var(--win);}
+.loseH{border:1px solid var(--lose);}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:6px;
+    padding:10px;
+    background:var(--panel);
+    border-radius:18px;
+    margin-bottom:10px;
+}
+
+.cell{
+    width:60px;
+    height:60px;
+    background:rgba(255,255,255,0.08);
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    cursor:pointer;
+}
+
+.win{background:#1b5e20;}
+.lose{background:#b71c1c;}
+
+.controls{width:100%;max-width:360px;}
+
+.row{
+    display:flex;
+    gap:5px;
+    margin-bottom:8px;
+}
+
+.btn{
+    flex:1;
+    padding:10px;
+    border:none;
+    border-radius:10px;
+    font-weight:700;
+}
+
+.bomb.active{
+    background:white;
+    color:black;
+}
+
+.start{background:#00d2ff;}
+.cash{background:#f2c94c;display:none;}
+</style>
 </head>
+
 <body>
-    <div class="header">
-        <div><div style="font-size: 10px; color: #aaa;">БАЛАНС</div><div id="bal" style="font-size: 20px; font-weight: 900; color: var(--success);">1000</div></div>
-        <div style="text-align: right;"><div style="font-size: 10px; color: #aaa;">МНОЖНИК</div><div id="mult" style="font-size: 20px; font-weight: 900; color: #ffab00;">x1.00</div></div>
-    </div>
-    <div class="history" id="history"></div>
-    <div class="grid" id="grid"></div>
-    <div class="controls">
-        <div id="setupArea">
-            <div class="bomb-selector">
-                <button class="bomb-btn" onclick="setBombs(3, this)">3</button>
-                <button class="bomb-btn active" onclick="setBombs(5, this)">5</button>
-                <button class="bomb-btn" onclick="setBombs(10, this)">10</button>
-                <button class="bomb-btn" onclick="setBombs(24, this)">24</button>
-            </div>
-            <input type="number" id="betField" value="100" style="margin-top: 8px;">
-        </div>
-        <button id="sBtn" class="action-btn btn-start" onclick="start()">Грати</button>
-        <button id="cBtn" class="action-btn btn-cashout" onclick="cashout()">Забрати</button>
-    </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        let balance = parseInt(localStorage.getItem('user_bal')) || 1000;
-        let active = false, gemsFound = 0, currentCoef = 1.0, currentBet = 0, bombsCount = 5;
-        let minesLocations = [];
+<div class="header">
+    <div>Баланс: <span id="bal">1000</span></div>
+    <div>Коеф: <span id="coef">x1.00</span></div>
+</div>
 
-        function setBombs(n, el) {
-            if(active) return;
-            bombsCount = n;
-            document.querySelectorAll('.bomb-btn').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-            tg.HapticFeedback.impactOccurred('light');
-        }
+<div class="history" id="history"></div>
 
-        function updateHistory(type) {
-            const h = document.getElementById('history');
-            const el = document.createElement('div');
-            el.className = `hist-item ${type === 'win' ? 'hist-win' : 'hist-lose'}`;
-            el.innerText = type;
-            h.prepend(el);
-            if(h.children.length > 6) h.lastChild.remove();
-        }
+<div class="grid" id="grid"></div>
 
-        // Тепер міни генеруються ПОВНІСТЮ рандомно по всьому полю
-        function generateMines() {
-            minesLocations = [];
-            let pool = Array.from({length: 25}, (_, i) => i);
-            for (let i = 0; i < bombsCount; i++) {
-                let randomIndex = Math.floor(Math.random() * pool.length);
-                minesLocations.push(pool.splice(randomIndex, 1)[0]);
-            }
-        }
+<div class="controls">
 
-        function start() {
-            currentBet = parseInt(document.getElementById('betField').value);
-            if(currentBet > balance || currentBet <= 0) return;
-            
-            balance -= currentBet; active = true; gemsFound = 0; currentCoef = 1.0;
-            generateMines(); // Генеруємо до першого кліку
-            
-            const g = document.getElementById('grid'); g.innerHTML = '';
-            for(let i=0; i<25; i++) {
-                let c = document.createElement('div'); c.className = 'cell';
-                c.onclick = () => clickCell(i, c); g.appendChild(c);
-            }
-            
-            updateUI();
-            document.getElementById('sBtn').style.display = 'none';
-            document.getElementById('cBtn').style.display = 'block';
-            document.getElementById('setupArea').classList.add('disabled');
-        }
+<div class="row">
+    <button class="btn bomb active" onclick="setBombs(3,this)">3</button>
+    <button class="btn bomb" onclick="setBombs(5,this)">5</button>
+    <button class="btn bomb" onclick="setBombs(10,this)">10</button>
+    <button class="btn bomb" onclick="setBombs(24,this)">24</button>
+</div>
 
-        function clickCell(i, el) {
-            if(!active || el.innerText !== '') return;
+<input id="bet" type="number" value="100" style="width:100%;padding:10px;border-radius:10px;margin-bottom:6px;">
 
-            if(minesLocations.includes(i)) {
-                el.innerText = '💣'; el.classList.add('lose');
-                updateHistory('lose');
-                revealAll(i); endGame();
-            } else {
-                el.innerText = '💎'; el.classList.add('win'); gemsFound++;
-                // Чесна формула множника
-                let nextGems = gemsFound;
-                let prob = 1;
-                for(let j=0; j<nextGems; j++) {
-                    prob *= (25 - bombsCount - j) / (25 - j);
-                }
-                currentCoef = (1 / prob) * 0.95; // 0.95 - це маржа (RTP)
-                updateUI();
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-        }
+<button id="startBtn" class="btn start" onclick="start()">ГРАТИ</button>
+<button id="cashBtn" class="btn cash" onclick="cashout()">ЗАБРАТИ</button>
 
-        function revealAll(hitIdx) {
-            const cells = document.querySelectorAll('.cell');
-            minesLocations.forEach(idx => {
-                if(idx !== hitIdx) {
-                    cells[idx].innerText = '💣'; cells[idx].classList.add('off');
-                }
-            });
-        }
+</div>
 
-        function cashout() {
-            balance += Math.floor(currentBet * currentCoef);
-            updateHistory('win');
-            tg.HapticFeedback.notificationOccurred('success');
-            endGame();
-        }
+<script>
+const tg = window.Telegram?.WebApp;
 
-        function endGame() {
-            active = false;
-            document.getElementById('sBtn').style.display = 'block';
-            document.getElementById('cBtn').style.display = 'none';
-            document.getElementById('setupArea').classList.remove('disabled');
-            updateUI();
-        }
+let balance = 1000;
+let bet = 0;
+let bombs = 5;
+let active = false;
+let coef = 1;
+let opened = [];
+let mines = [];
 
-        function updateUI() {
-            document.getElementById('bal').innerText = balance;
-            document.getElementById('mult').innerText = 'x' + currentCoef.toFixed(2);
-            document.getElementById('cBtn').innerText = `ЗАБРАТИ ${(currentBet * currentCoef).toFixed(0)}`;
-            localStorage.setItem('user_bal', balance);
-        }
-        updateUI();
-    </script>
+function setBombs(n,el){
+    if(active) return;
+    bombs = n;
+    document.querySelectorAll('.bomb').forEach(b=>b.classList.remove('active'));
+    el.classList.add('active');
+}
+
+function createBoard(){
+    const g=document.getElementById("grid");
+    g.innerHTML="";
+    opened=[];
+    mines=[];
+
+    for(let i=0;i<25;i++){
+        let d=document.createElement("div");
+        d.className="cell";
+        d.onclick=()=>click(i,d);
+        g.appendChild(d);
+    }
+}
+
+function generateMines(){
+    let arr=[];
+    for(let i=0;i<25;i++) arr.push(i);
+
+    arr.sort(()=>Math.random()-0.5);
+    mines = arr.slice(0,bombs);
+}
+
+function start(){
+    bet=+document.getElementById("bet").value;
+    if(bet>balance||bet<=0) return;
+
+    balance-=bet;
+    active=true;
+    coef=1;
+
+    createBoard();
+    generateMines();
+
+    document.getElementById("cashBtn").style.display="block";
+    update();
+}
+
+function click(i,el){
+    if(!active||opened.includes(i)) return;
+    opened.push(i);
+
+    if(mines.includes(i)){
+        el.innerHTML="💣";
+        el.classList.add("lose");
+        reveal();
+        addHistory(false);
+        end();
+        return;
+    }
+
+    el.innerHTML="💎";
+    el.classList.add("win");
+
+    let risk = bombs/25;
+    coef += (0.2 + risk*0.8);
+
+    update();
+}
+
+function reveal(){
+    const cells=document.querySelectorAll(".cell");
+    mines.forEach(i=>{
+        cells[i].innerHTML="💣";
+    });
+}
+
+function cashout(){
+    if(!active) return;
+
+    let win = Math.floor(bet*coef);
+    balance+=win;
+
+    addHistory(true);
+    end();
+}
+
+function end(){
+    active=false;
+    document.getElementById("cashBtn").style.display="none";
+    update();
+}
+
+function addHistory(win){
+    const h=document.getElementById("history");
+    let d=document.createElement("div");
+    d.className="hist "+(win?"winH":"loseH");
+    d.innerText=win?"WIN x"+coef.toFixed(2):"LOSE";
+    h.prepend(d);
+    if(h.children.length>6)h.lastChild.remove();
+}
+
+function update(){
+    document.getElementById("bal").innerText=balance;
+    document.getElementById("coef").innerText="x"+coef.toFixed(2);
+}
+
+createBoard();
+update();
+</script>
+
 </body>
 </html>
