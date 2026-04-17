@@ -4,193 +4,197 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* ПІДКЛЮЧАЄМО СУЧАСНИЙ ШРИФТ "INTER" */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-
-        body { 
-            background-color: #0a0a0c; 
-            background-image: radial-gradient(at 10% 10%, rgba(36, 139, 145, 0.15) 0px, transparent 50%), radial-gradient(at 90% 90%, rgba(255, 143, 0, 0.08) 0px, transparent 50%);
-            color: white; 
-            font-family: 'Inter', sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            padding: 15px; 
-            margin: 0; 
-            user-select: none; 
-            -webkit-tap-highlight-color: transparent;
+        :root {
+            --primary: #00d2ff;
+            --secondary: #3a7bd5;
+            --success: #00c853;
+            --error: #ff5252;
+            --bg: #050505;
+            --panel: rgba(255, 255, 255, 0.05);
         }
 
-        /* СКЛЯНИЙ ЕФЕКТ */
-        .glass-panel {
-            background: rgba(26, 26, 29, 0.6);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        body {
+            background: var(--bg);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+            height: 100vh;
         }
 
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            width: 100%; 
-            max-width: 320px; 
-            padding: 15px; 
-            margin-bottom: 15px; 
+        /* Анімація появи */
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .header {
+            width: 100%;
+            max-width: 340px;
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: var(--panel);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 15px;
             box-sizing: border-box;
         }
-        .balance { color: #81c784; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
-        .coef { color: #ffd54f; font-size: 20px; font-weight: 800; }
 
-        .status-msg { 
-            margin-bottom: 15px; 
-            font-size: 13px; 
-            font-weight: 600; 
-            color: #9e9e9e; 
-            text-transform: uppercase; 
-            letter-spacing: 1.5px; 
+        .balance-info div { font-size: 12px; color: #aaa; text-transform: uppercase; }
+        .balance-val { font-size: 20px; font-weight: 900; color: var(--success); }
+        .coef-val { font-size: 20px; font-weight: 900; color: #ffab00; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            padding: 15px;
+            background: var(--panel);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            width: 52px;
+            height: 52px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .cell:active { transform: scale(0.9); }
+        
+        .cell.win { 
+            background: linear-gradient(135deg, #00c853, #1b5e20); 
+            animation: popIn 0.3s forwards;
+            box-shadow: 0 0 15px rgba(0, 200, 83, 0.4);
+        }
+
+        .cell.lose { 
+            background: linear-gradient(135deg, #ff5252, #b71c1c); 
+            animation: popIn 0.3s forwards;
+            box-shadow: 0 0 15px rgba(255, 82, 82, 0.4);
+        }
+
+        .controls {
+            width: 100%;
+            max-width: 340px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .bomb-selector {
+            display: flex;
+            background: rgba(0,0,0,0.3);
+            padding: 4px;
+            border-radius: 14px;
+            gap: 4px;
+        }
+
+        .bomb-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-weight: 900;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .bomb-btn.active { background: white; color: black; }
+
+        .bet-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 15px;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            outline: none;
             text-align: center;
         }
 
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(5, 1fr); 
-            gap: 10px; 
-            padding: 18px; 
-            margin-bottom: 20px; 
-            box-sizing: border-box;
-        }
-
-        .cell { 
-            width: 55px; 
-            height: 55px; 
-            background: #212124; 
-            border-radius: 12px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 28px; 
-            cursor: pointer; 
-            transition: all 0.2s ease; 
-            position: relative; 
-            border: 1px solid #2a2a2e;
-        }
-        .cell:not(.disabled):hover {
-            background: #2a2a2e;
-            border-color: #3a3a40;
-            transform: translateY(-2px);
-        }
-        .cell:active { transform: scale(0.95); }
-
-        .cell.win { 
-            background: linear-gradient(135deg, #a5d6a7 0%, #2e7d32 100%); 
-            box-shadow: 0 0 15px rgba(76, 175, 80, 0.5); 
+        .action-btn {
+            flex: 1.2;
             border: none;
-        }
-        .cell.lose { 
-            background: linear-gradient(135deg, #ef9a9a 0%, #c62828 100%); 
-            box-shadow: 0 0 15px rgba(244, 67, 54, 0.5); 
-            border: none;
-        }
-        .cell.disabled { pointer-events: none; }
-
-        .controls { 
-            width: 100%; 
-            max-width: 320px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-            padding: 15px;
-            box-sizing: border-box;
-        }
-        
-        .bomb-selector { 
-            display: flex; 
-            background: rgba(0,0,0,0.2);
-            padding: 6px; 
-            gap: 6px; 
-            border-radius: 12px;
-        }
-        .bomb-btn { 
-            flex: 1; 
-            padding: 12px; 
-            border: none; 
-            background: transparent; 
-            color: #757575; 
-            border-radius: 10px; 
-            font-weight: 700; 
-            font-size: 14px;
-            cursor: pointer; 
-            transition: 0.3s; 
-        }
-        .bomb-btn.active { 
-            background: #248b91; 
-            color: white; 
-            box-shadow: 0 4px 12px rgba(36, 139, 145, 0.4); 
+            border-radius: 14px;
+            font-weight: 900;
+            font-size: 16px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+            color: white;
         }
 
-        .bet-row { display: flex; gap: 12px; align-items: center; }
-        
-        input { 
-            flex: 1; 
-            padding: 16px; 
-            border-radius: 12px; 
-            border: 1px solid #2a2a2e; 
-            background: #1a1a1d; 
-            color: white; 
-            font-size: 18px; 
-            font-weight: 700; 
-            outline: none; 
-            width: 50%;
-        }
-        input:focus { border-color: #248b91; }
-        
-        .btn-main { 
-            flex: 1; 
-            padding: 16px; 
-            border-radius: 12px; 
-            border: none; 
-            font-weight: 800; 
-            font-size: 16px; 
-            cursor: pointer; 
-            color: white; 
-            transition: 0.3s; 
-            text-transform: uppercase; 
-        }
-        .btn-start { 
-            background: linear-gradient(135deg, #4dd0e1 0%, #248b91 100%); 
-        }
+        .btn-start { background: linear-gradient(to right, #00d2ff, #3a7bd5); }
         .btn-cashout { 
-            background: linear-gradient(135deg, #ffb74d 0%, #ff8f00 100%); 
-            display: none; 
+            background: linear-gradient(to right, #f2994a, #f2c94c); 
+            display: none;
+            color: black;
         }
+
+        .shake { animation: shake 0.4s; }
+        .disabled { opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body>
 
-    <div class="header glass-panel">
-        <div class="balance">💰 <span id="balanceDisplay">1000</span></div>
-        <div class="coef">x<span id="coefDisplay">1.00</span></div>
+    <div class="header">
+        <div class="balance-info">
+            <div>Баланс</div>
+            <div class="balance-val" id="bal">1000</div>
+        </div>
+        <div class="balance-info" style="text-align: right;">
+            <div>Множник</div>
+            <div class="coef-val" id="mult">x1.00</div>
+        </div>
     </div>
 
-    <div id="statusMsg" class="status-msg">Виберіть кількість бомб</div>
+    <div class="grid" id="grid"></div>
 
-    <div class="grid glass-panel" id="grid"></div>
-
-    <div class="controls glass-panel">
-        <div class="bomb-selector" id="bombSelector">
-            <button class="bomb-btn" onclick="selectBombs(3, this)">3</button>
-            <button class="bomb-btn active" onclick="selectBombs(5, this)">5</button>
-            <button class="bomb-btn" onclick="selectBombs(10, this)">10</button>
-            <button class="bomb-btn" onclick="selectBombs(20, this)">20</button>
+    <div class="controls">
+        <div class="bomb-selector" id="bSelector">
+            <button class="bomb-btn" onclick="setBombs(3, this)">3</button>
+            <button class="bomb-btn active" onclick="setBombs(5, this)">5</button>
+            <button class="bomb-btn" onclick="setBombs(10, this)">10</button>
+            <button class="bomb-btn" onclick="setBombs(20, this)">20</button>
         </div>
 
-        <div class="bet-row">
-            <input type="number" id="betInput" value="100" inputmode="numeric">
-            <button id="startBtn" class="btn-main btn-start" onclick="startGame()">Старт</button>
-            <button id="cashoutBtn" class="btn-main btn-cashout" onclick="cashout()">Забрати</button>
+        <div class="bet-input-container">
+            <input type="number" id="betField" value="100" inputmode="numeric">
+            <button id="sBtn" class="action-btn btn-start" onclick="start()">Старт</button>
+            <button id="cBtn" class="action-btn btn-cashout" onclick="cashout()">Забрати</button>
         </div>
     </div>
 
@@ -198,130 +202,121 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        let balance = parseInt(localStorage.getItem('m_bal')) || 1000;
+        let balance = parseInt(localStorage.getItem('user_bal')) || 1000;
         let bet = 0;
-        let coef = 1.0;
         let bombsCount = 5;
-        let bombPositions = [];
-        let gameActive = false;
-        let openedCount = 0;
+        let bombs = [];
+        let active = false;
+        let gemsFound = 0;
+        let currentCoef = 1.0;
 
-        function selectBombs(count, btn) {
-            if (gameActive) return;
-            bombsCount = count;
+        function setBombs(n, el) {
+            if(active) return;
+            bombsCount = n;
             document.querySelectorAll('.bomb-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            el.classList.add('active');
             tg.HapticFeedback.impactOccurred('light');
         }
 
-        function updateDisplay() {
-            document.getElementById('balanceDisplay').innerText = balance;
-            document.getElementById('coefDisplay').innerText = coef.toFixed(2);
-            localStorage.setItem('m_bal', balance);
+        function updateUI() {
+            document.getElementById('bal').innerText = balance;
+            document.getElementById('mult').innerText = 'x' + currentCoef.toFixed(2);
+            localStorage.setItem('user_bal', balance);
         }
 
-        function createGrid() {
-            const grid = document.getElementById('grid');
-            grid.innerHTML = '';
-            for (let i = 0; i < 25; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.id = 'c-' + i;
-                cell.onclick = () => handleCellClick(i);
-                grid.appendChild(cell);
+        function createBoard() {
+            const g = document.getElementById('grid');
+            g.innerHTML = '';
+            for(let i=0; i<25; i++) {
+                let c = document.createElement('div');
+                c.className = 'cell';
+                c.onclick = () => clickCell(i, c);
+                g.appendChild(c);
             }
         }
 
-        function startGame() {
-            bet = parseInt(document.getElementById('betInput').value);
-            if (isNaN(bet) || bet <= 0 || bet > balance) {
-                tg.showAlert("Недостатньо коштів або невірна ставка!");
+        function start() {
+            bet = parseInt(document.getElementById('betField').value);
+            if(isNaN(bet) || bet <= 0 || bet > balance) {
+                tg.showAlert("⚠️ Перевір ставку!");
                 return;
             }
 
             balance -= bet;
-            coef = 1.0;
-            openedCount = 0;
-            gameActive = true;
-            bombPositions = [];
-
-            while(bombPositions.length < bombsCount) {
+            active = true;
+            gemsFound = 0;
+            currentCoef = 1.0;
+            bombs = [];
+            
+            while(bombs.length < bombsCount) {
                 let r = Math.floor(Math.random() * 25);
-                if(!bombPositions.includes(r)) bombPositions.push(r);
+                if(!bombs.includes(r)) bombs.push(r);
             }
 
-            createGrid();
-            updateDisplay();
+            createBoard();
+            updateUI();
             
-            document.getElementById('startBtn').style.display = 'none';
-            document.getElementById('cashoutBtn').style.display = 'block';
-            document.getElementById('bombSelector').style.opacity = '0.5';
-            document.getElementById('betInput').disabled = true;
-            document.getElementById('statusMsg').innerText = "Гра почалася! Шукай 💎";
-            document.getElementById('statusMsg').style.color = "#81c784";
+            document.getElementById('sBtn').style.display = 'none';
+            document.getElementById('cBtn').style.display = 'block';
+            document.getElementById('cBtn').innerText = `Забрати`;
+            document.getElementById('bSelector').classList.add('disabled');
+            document.getElementById('betField').classList.add('disabled');
         }
 
-        function handleCellClick(idx) {
-            if (!gameActive) return;
-            const cell = document.getElementById('c-' + idx);
-            if (cell.classList.contains('disabled') || cell.innerText !== '') return;
+        function clickCell(i, el) {
+            if(!active || el.innerText !== '') return;
 
-            if (bombPositions.includes(idx)) {
-                cell.innerText = '💣';
-                cell.classList.add('lose');
-                finishGame(false);
+            if(bombs.includes(i)) {
+                el.innerText = '💣';
+                el.classList.add('lose');
+                document.getElementById('grid').classList.add('shake');
+                endGame(false);
             } else {
-                cell.innerText = '💎';
-                cell.classList.add('win');
-                cell.classList.add('disabled');
-                openedCount++;
-
-                let remainingSafe = (25 - bombsCount) - (openedCount - 1);
-                let step = (bombsCount / remainingSafe) * 1.2;
-                coef += step;
-
-                document.getElementById('statusMsg').innerText = `Коефіцієнт: x${coef.toFixed(2)}`;
-                updateDisplay();
+                el.innerText = '💎';
+                el.classList.add('win');
+                gemsFound++;
+                
+                // Просунута формула коефіцієнта
+                let safeTotal = 25 - bombsCount;
+                currentCoef *= (safeTotal / (safeTotal - gemsFound + 1)) * 1.02;
+                
+                document.getElementById('cBtn').innerText = `Забрати ${(bet * currentCoef).toFixed(0)}`;
+                updateUI();
                 tg.HapticFeedback.impactOccurred('medium');
             }
         }
 
         function cashout() {
-            if (!gameActive || openedCount === 0) return;
-            let win = Math.floor(bet * coef);
+            if(!active || gemsFound === 0) return;
+            let win = Math.floor(bet * currentCoef);
             balance += win;
-            tg.showAlert(`✅ Виграш: ${win}!`);
-            finishGame(true);
+            tg.HapticFeedback.notificationOccurred('success');
+            endGame(true);
         }
 
-        function finishGame(win) {
-            gameActive = false;
-            document.getElementById('startBtn').style.display = 'block';
-            document.getElementById('cashoutBtn').style.display = 'none';
-            document.getElementById('bombSelector').style.opacity = '1';
-            document.getElementById('betInput').disabled = false;
-
-            bombPositions.forEach(p => {
-                const bc = document.getElementById('c-' + p);
-                if (bc.innerText !== '💣') {
-                    bc.innerText = '💣';
-                    bc.style.opacity = '0.4';
+        function endGame(win) {
+            active = false;
+            document.getElementById('sBtn').style.display = 'block';
+            document.getElementById('cBtn').style.display = 'none';
+            document.getElementById('bSelector').classList.remove('disabled');
+            document.getElementById('betField').classList.remove('disabled');
+            
+            // Показуємо всі бомби
+            const cells = document.getElementsByClassName('cell');
+            bombs.forEach(b => {
+                if(cells[b].innerText === '') {
+                    cells[b].innerText = '💣';
+                    cells[b].style.opacity = '0.5';
                 }
             });
 
-            if (!win) {
-                document.getElementById('statusMsg').innerText = "💥 Програш!";
-                document.getElementById('statusMsg').style.color = "#ef9a9a";
-                tg.HapticFeedback.notificationOccurred('error');
-            } else {
-                document.getElementById('statusMsg').innerText = "Чекаємо нову ставку";
-                document.getElementById('statusMsg').style.color = "#9e9e9e";
-            }
-            updateDisplay();
+            if(!win) tg.HapticFeedback.notificationOccurred('error');
+            setTimeout(() => document.getElementById('grid').classList.remove('shake'), 400);
+            updateUI();
         }
 
-        updateDisplay();
-        createGrid();
+        updateUI();
+        createBoard();
     </script>
 </body>
 </html>
