@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background: #1a1a1a; color: white; font-family: sans-serif; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; max-width: 300px; margin: 20px auto; }
+        .cell { width: 50px; height: 50px; background: #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; }
+        .cell.open { background: #444; }
+        .btn { background: #248b91; color: white; border: none; padding: 10px 20px; border-radius: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Mines Mini App</h2>
+    <div id="balance">Баланс: 1000</div>
+    <div class="grid" id="grid"></div>
+    <button class="btn" onclick="startGame()">Нова гра</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Розгорнути на весь екран
+
+        let grid = document.getElementById('grid');
+        function startGame() {
+            grid.innerHTML = '';
+            for (let i = 0; i < 25; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.onclick = () => {
+                    cell.innerHTML = Math.random() > 0.2 ? '💎' : '💣';
+                    cell.style.background = cell.innerHTML === '💣' ? 'red' : 'green';
+                };
+                grid.appendChild(cell);
+            }
+        }
+        startGame();
+    </script>
+</body>
+</html>
