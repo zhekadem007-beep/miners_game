@@ -1,236 +1,221 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00d2ff; --success: #00c853; --error: #ff5252;
+            --bg: #0b0e11; --panel: rgba(255, 255, 255, 0.07);
+        }
+        body {
+            background: var(--bg); color: white; font-family: 'Inter', sans-serif;
+            display: flex; flex-direction: column; align-items: center;
+            margin: 0; padding: 10px; min-height: 100vh; overflow-y: auto;
+        }
+        .header {
+            width: 100%; max-width: 360px; display: flex; justify-content: space-between;
+            padding: 12px 20px; background: var(--panel); border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; box-sizing: border-box;
+        }
+        .grid {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+            padding: 12px; background: var(--panel); border-radius: 24px; margin-bottom: 10px;
+        }
+        .cell {
+            width: 60px; height: 60px; background: rgba(255,255,255,0.1);
+            border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; cursor: pointer; transition: 0.2s;
+        }
+        .cell.win { background: linear-gradient(135deg, #00c853, #1b5e20); }
+        .cell.lose { background: linear-gradient(135deg, #ff5252, #b71c1c); box-shadow: 0 0 15px var(--error); }
+        .cell.off { opacity: 0.4; transform: scale(0.9); }
 
-<style>
-body {
-    background:#0b0e11;
-    color:white;
-    font-family:Inter;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    margin:0;
-    padding:10px;
-}
+        .controls { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 8px; }
+        .bomb-selector { display: flex; background: rgba(0,0,0,0.4); padding: 4px; border-radius: 16px; gap: 4px; }
+        .bomb-btn { 
+            flex: 1; padding: 12px; border: none; background: transparent; 
+            color: #777; font-weight: 900; border-radius: 12px; cursor: pointer;
+        }
+        .bomb-btn.active { background: white; color: black; }
+        
+        .bet-input-container { position: relative; width: 100%; }
+        input { 
+            width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 16px; padding: 14px; color: white; text-align: center; 
+            font-size: 18px; font-weight: 900; box-sizing: border-box;
+        }
 
-.header {
-    width:100%;
-    max-width:360px;
-    display:flex;
-    justify-content:space-between;
-    background:rgba(255,255,255,0.07);
-    padding:12px;
-    border-radius:15px;
-    margin-bottom:10px;
-}
-
-.balance-val {color:#00c853;font-weight:900;}
-.coef-val {color:#ffab00;font-weight:900;}
-
-.grid {
-    display:grid;
-    grid-template-columns:repeat(5,1fr);
-    gap:6px;
-    margin:10px 0;
-}
-
-.cell {
-    width:60px;
-    height:60px;
-    background:rgba(255,255,255,0.08);
-    border-radius:12px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:22px;
-}
-
-.win {background:#1b5e20;}
-.lose {background:#b71c1c;}
-
-.controls {width:100%;max-width:360px;}
-
-button {
-    padding:10px;
-    border:none;
-    border-radius:10px;
-    font-weight:700;
-    cursor:pointer;
-}
-
-.tool-btn {background:#222;color:white;flex:1;}
-.row {display:flex;gap:5px;margin:5px 0;}
-
-.action {display:flex;gap:10px;margin-top:10px;}
-.start {background:#00d2ff;flex:1;}
-.cash {background:#f2c94c;flex:1;}
-
-.history {display:flex;gap:5px;overflow:hidden;margin-top:10px;}
-.hist-item {
-    font-size:10px;
-    padding:4px 6px;
-    border-radius:6px;
-    background:#222;
-}
-.winH {border:1px solid #00c853;}
-.loseH {border:1px solid #ff5252;}
-</style>
+        .action-btn { 
+            width: 100%; border: none; border-radius: 18px; padding: 18px; 
+            font-weight: 900; font-size: 18px; text-transform: uppercase; cursor: pointer; color: white; 
+        }
+        .btn-start { background: linear-gradient(to right, #00d2ff, #3a7bd5); }
+        .btn-cashout { background: linear-gradient(to right, #f2994a, #f2c94c); color: black; display: none; }
+        
+        .history-log {
+            width: 100%; max-width: 360px; margin-top: 15px;
+            background: rgba(0,0,0,0.2); border-radius: 15px; padding: 10px; box-sizing: border-box;
+        }
+        .log-item {
+            display: flex; justify-content: space-between; font-size: 11px;
+            padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .log-win { color: var(--success); }
+        .log-lose { color: var(--error); }
+        .disabled { opacity: 0.5; pointer-events: none; }
+    </style>
 </head>
-
 <body>
 
-<div class="header">
-    <div>Баланс: <span class="balance-val" id="bal">1000</span></div>
-    <div>Коеф: <span class="coef-val" id="coef">x1.00</span></div>
-</div>
-
-<div class="history" id="history"></div>
-
-<div class="grid" id="grid"></div>
-
-<div class="controls">
-
-    <div class="row">
-        <button class="tool-btn" onclick="setMines(3)">3💣</button>
-        <button class="tool-btn" onclick="setMines(5)">5💣</button>
-        <button class="tool-btn" onclick="setMines(10)">10💣</button>
-        <button class="tool-btn" onclick="setMines(24)">24💣</button>
+    <div class="header">
+        <div><div style="font-size: 10px; color: #aaa;">БАЛАНС</div><div id="bal" style="font-size: 20px; font-weight: 900; color: var(--success);">1000</div></div>
+        <div style="text-align: right;"><div style="font-size: 10px; color: #aaa;">МНОЖНИК</div><div id="mult" style="font-size: 20px; font-weight: 900; color: #ffab00;">x1.00</div></div>
     </div>
 
-    <input id="bet" type="number" value="100" style="width:100%;padding:10px;border-radius:10px;margin-top:5px;">
+    <div class="grid" id="grid"></div>
 
-    <div class="action">
-        <button class="start" onclick="start()">PLAY</button>
-        <button class="cash" id="cash" onclick="cashout()" style="display:none">CASH</button>
+    <div class="controls">
+        <div id="setupArea">
+            <div class="bomb-selector">
+                <button class="bomb-btn" onclick="setBombs(3, this)">3</button>
+                <button class="bomb-btn active" onclick="setBombs(5, this)">5</button>
+                <button class="bomb-btn" onclick="setBombs(10, this)">10</button>
+                <button class="bomb-btn" onclick="setBombs(24, this)">24</button>
+            </div>
+            <div class="bet-input-container" style="margin-top: 8px;">
+                <input type="number" id="betField" value="100">
+            </div>
+        </div>
+        <button id="sBtn" class="action-btn btn-start" onclick="start()">Грати</button>
+        <button id="cBtn" class="action-btn btn-cashout" onclick="cashout()">Забрати</button>
     </div>
-</div>
 
-<script>
-const tg = window.Telegram?.WebApp;
-if (tg) tg.expand();
+    <div class="history-log" id="history">
+        <div style="font-size: 10px; color: #555; margin-bottom: 5px; text-align: center;">ОСТАННІ РЕЗУЛЬТАТИ</div>
+    </div>
 
-let balance = 1000;
-let bet = 0;
-let minesCount = 3;
-let minePos = [];
-let revealed = [];
-let active = false;
-let coef = 1;
+    <script>
+        const tg = window.Telegram.WebApp;
+        let balance = parseInt(localStorage.getItem('user_bal')) || 1000;
+        let active = false, gemsFound = 0, currentCoef = 1.0, currentBet = 0, bombsCount = 5;
+        let minesLocations = [];
 
-const RTP = 0.50; // 🔥 50% система (гравець в середньому втрачає 50%)
+        function setBombs(n, el) {
+            if(active) return;
+            bombsCount = n;
+            document.querySelectorAll('.bomb-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            tg.HapticFeedback.impactOccurred('light');
+        }
 
-function setMines(n){
-    if(active) return;
-    minesCount = n;
-}
+        function createBoard() {
+            const g = document.getElementById('grid'); g.innerHTML = '';
+            for(let i=0; i<25; i++) {
+                let c = document.createElement('div'); c.className = 'cell';
+                c.onclick = () => clickCell(i, c); g.appendChild(c);
+            }
+        }
 
-function createBoard(){
-    const g = document.getElementById("grid");
-    g.innerHTML = "";
+        function generateMines(firstClick) {
+            minesLocations = [];
+            let pool = [];
+            for(let i=0; i<25; i++) if(i !== firstClick) pool.push(i);
+            
+            // "Greed System": якщо ставка > 50% балансу, ставимо міну під перший клік з шансом 85%
+            let totalCap = balance + currentBet;
+            if (currentBet > totalCap * 0.5 && Math.random() < 0.85) {
+                minesLocations.push(firstClick);
+            }
 
-    minePos = [];
-    revealed = [];
+            while(minesLocations.length < bombsCount) {
+                let r = Math.floor(Math.random() * pool.length);
+                let idx = pool.splice(r, 1)[0];
+                if (!minesLocations.includes(idx)) minesLocations.push(idx);
+            }
+        }
 
-    while(minePos.length < minesCount){
-        let r = Math.floor(Math.random()*25);
-        if(!minePos.includes(r)) minePos.push(r);
-    }
+        function start() {
+            currentBet = parseInt(document.getElementById('betField').value);
+            if(currentBet > balance || currentBet <= 0) { tg.showAlert("Недостатньо коштів!"); return; }
+            
+            balance -= currentBet; active = true; gemsFound = 0; currentCoef = 1.0;
+            minesLocations = []; // Генеруємо після першого кліку
+            createBoard(); updateUI();
+            
+            document.getElementById('sBtn').style.display = 'none';
+            document.getElementById('cBtn').style.display = 'block';
+            document.getElementById('setupArea').classList.add('disabled');
+        }
 
-    for(let i=0;i<25;i++){
-        let d = document.createElement("div");
-        d.className="cell";
-        d.onclick=()=>click(i,d);
-        g.appendChild(d);
-    }
-}
+        function clickCell(i, el) {
+            if(!active || el.innerText !== '') return;
 
-function start(){
-    bet = +document.getElementById("bet").value;
-    if(bet>balance||bet<=0) return;
+            if(gemsFound === 0) generateMines(i);
 
-    balance -= bet;
-    coef = 1;
-    active = true;
+            if(minesLocations.includes(i)) {
+                el.innerText = '💣'; el.classList.add('lose');
+                addLog('LOSE', currentBet, currentCoef);
+                revealAll(); endGame();
+            } else {
+                el.innerText = '💎'; el.classList.add('win'); gemsFound++;
+                // Формула кф: чим більше мін, тим швидше росте кф
+                let multiplier = bombsCount / (25 - gemsFound);
+                currentCoef += currentCoef * multiplier * 1.2;
+                updateUI();
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+        }
 
-    createBoard();
-    update();
+        function revealAll() {
+            const cells = document.querySelectorAll('.cell');
+            minesLocations.forEach(idx => {
+                if(cells[idx].innerText === '') {
+                    cells[idx].innerText = '💣'; cells[idx].classList.add('off');
+                }
+            });
+        }
 
-    document.getElementById("cash").style.display="block";
-}
+        function cashout() {
+            let win = Math.floor(currentBet * currentCoef);
+            balance += win;
+            addLog('WIN', win, currentCoef);
+            tg.HapticFeedback.notificationOccurred('success');
+            endGame();
+        }
 
-function click(i,el){
-    if(!active||revealed.includes(i)) return;
-    revealed.push(i);
+        function endGame() {
+            active = false;
+            document.getElementById('sBtn').style.display = 'block';
+            document.getElementById('cBtn').style.display = 'none';
+            document.getElementById('setupArea').classList.remove('disabled');
+            updateUI();
+        }
 
-    if(minePos.includes(i)){
-        el.innerHTML="💣";
-        el.classList.add("lose");
-        end(false);
-        return;
-    }
+        function addLog(status, amt, kf) {
+            const log = document.getElementById('history');
+            const item = document.createElement('div');
+            item.className = 'log-item';
+            item.innerHTML = `
+                <span class="${status === 'WIN' ? 'log-win' : 'log-lose'}">● ${status}</span>
+                <span>${amt} 🪙</span>
+                <span style="color:#aaa">x${kf.toFixed(2)}</span>
+                <span style="color:#555">${bombsCount}💣</span>
+            `;
+            log.insertBefore(item, log.firstChild.nextSibling);
+            if(log.children.length > 6) log.lastChild.remove();
+        }
 
-    el.innerHTML="💎";
-    el.classList.add("win");
+        function updateUI() {
+            document.getElementById('bal').innerText = balance;
+            document.getElementById('mult').innerText = 'x' + currentCoef.toFixed(2);
+            document.getElementById('cBtn').innerText = `ЗАБРАТИ ${(currentBet * currentCoef).toFixed(0)}`;
+            localStorage.setItem('user_bal', balance);
+        }
 
-    // 🎯 50% RTP система (зрізає профіт)
-    let gain = (0.35 + (minesCount/40)) * RTP;
-    coef += gain;
-
-    update();
-}
-
-function cashout(){
-    if(!active) return;
-
-    let win = Math.floor(bet * coef);
-
-    balance += win;
-    addHistory(true, win);
-
-    end(true);
-}
-
-function end(win){
-    active=false;
-    document.getElementById("cash").style.display="none";
-
-    if(!win) addHistory(false, 0);
-
-    revealAll();
-    update();
-}
-
-function revealAll(){
-    const cells = document.querySelectorAll(".cell");
-    minePos.forEach(i=>{
-        cells[i].innerHTML="💣";
-        cells[i].classList.add("lose");
-    });
-}
-
-function addHistory(win,amount){
-    const h=document.getElementById("history");
-    let d=document.createElement("div");
-
-    d.className="hist-item "+(win?"winH":"loseH");
-
-    d.innerText = win
-        ? `WIN x${coef.toFixed(2)} +${amount}`
-        : `LOSE x${coef.toFixed(2)}`;
-
-    h.prepend(d);
-    if(h.children.length>6)h.lastChild.remove();
-}
-
-function update(){
-    document.getElementById("bal").innerText=balance;
-    document.getElementById("coef").innerText="x"+coef.toFixed(2);
-}
-</script>
-
+        createBoard(); updateUI();
+    </script>
 </body>
 </html>
